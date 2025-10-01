@@ -1,0 +1,76 @@
+@page "/locations"
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@using MudBlazor
+@inject LocationService LocationService
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+
+<h3>Locations</h3>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="AddLocation">Add New Location</MudButton>
+
+@if (locations is null)
+{
+    <p>Loading...</p>
+}
+else if (locations.Count == 0)
+{
+    <p>No locations found.</p>
+}
+else
+{
+    <MudTable Items="locations" Hover="true" Breakpoint="Breakpoint.Sm">
+        <HeaderContent>
+            <MudTh>Id</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => NavigateToDetails(context.Id)">View / Edit</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<Location>? locations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLocationsAsync();
+    }
+
+    private async Task LoadLocationsAsync()
+    {
+        locations = await LocationService.GetLocationsAsync();
+    }
+
+    private void NavigateToDetails(int id)
+    {
+        NavigationManager.NavigateTo($"/locations/{id}");
+    }
+
+    private async Task AddLocation()
+    {
+        string newLocationName = "";
+        var parameters = new DialogParameters { ["LocationName"] = newLocationName };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = DialogService.Show<AddLocationDialog>("Add New Location", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            newLocationName = result.Data.ToString();
+            if (!string.IsNullOrWhiteSpace(newLocationName))
+            {
+                var newLocation = new Location { Name = newLocationName };
+                await LocationService.CreateLocationAsync(newLocation);
+                await LoadLocationsAsync();
+            }
+        }
+    }
+}

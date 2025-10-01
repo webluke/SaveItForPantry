@@ -1,0 +1,108 @@
+@page "/locations/{Id:int}"
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@using MudBlazor
+@inject LocationService LocationService
+@inject UpcService UpcService
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<h3>Location Details</h3>
+
+@if (location is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <MudText Typo="Typo.h4">@location.Name</MudText>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="AddUpcToLocation">Add UPC to Location</MudButton>
+
+    @if (location.LocationItems.Count == 0)
+    {
+        <p>No UPCs in this location.</p>
+    }
+    else
+    {
+        <MudTable Items="location.LocationItems" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>UPC</MudTh>
+                <MudTh>Title</MudTh>
+                <MudTh>Quantity</MudTh>
+                <MudTh>Date Added</MudTh>
+                <MudTh>Expiration Date</MudTh>
+                <MudTh>Short ID</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="UPC">@context.UpcData.Upc</MudTd>
+                <MudTd DataLabel="Title">@context.UpcData.Title</MudTd>
+                <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
+                <MudTd DataLabel="Date Added">@context.DateAdded.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Expiration Date">@context.ExpirationDate?.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Short ID">@context.ShortId</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Location? location;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLocationDetailsAsync();
+    }
+
+    private async Task LoadLocationDetailsAsync()
+    {
+        location = await LocationService.GetLocationByIdAsync(Id);
+    }
+
+    private async Task AddUpcToLocation()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = DialogService.Show<AddUpcToLocationDialog>("Add UPC to Location", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var dialogData = (AddUpcToLocationDialog.DialogResultData)result.Data;
+            if (dialogData != null)
+            {
+                try
+                {
+                    var upcData = await UpcService.GetUpcDataByUpcAsync(dialogData.Upc);
+                    if (upcData != null)
+                    {
+                        await LocationService.AddUpcToLocationAsync(
+                            Id,
+                            upcData.Id,
+                            dialogData.Quantity,
+                            dialogData.ExpirationDate
+                        );
+                        Snackbar.Add("UPC added to location successfully!", Severity.Success);
+                        await LoadLocationDetailsAsync();
+                    }
+                    else
+                    {
+                        Snackbar.Add("UPC not found.", Severity.Error);
+                    }
+                }
+                catch (NoApiResultException ex)
+                {
+                    Snackbar.Add(ex.Message + ". Please add the UPC first.", Severity.Warning);
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add($"Error adding UPC: {ex.Message}", Severity.Error);
+                }
+            }
+        }
+    }
+}

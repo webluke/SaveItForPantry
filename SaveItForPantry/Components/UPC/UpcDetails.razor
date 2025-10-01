@@ -1,0 +1,142 @@
+@page "/upcs/{Id:int}"
+@page "/upcs/new/{Upc}"
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@using MudBlazor
+@inject UpcService UpcService
+@inject NavigationManager NavigationManager
+
+<h3>UPC Details</h3>
+
+@if (item is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="item" OnValidSubmit="SaveAsync">
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.Upc" Label="UPC" Disabled="item.Id != 0" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.Ean" Label="EAN" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="item.Title" Label="Title" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="item.Description" Label="Description" Lines="5" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.Brand" Label="Brand" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.Model" Label="Model" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.Color" Label="Color" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.Size" Label="Size" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.Dimension" Label="Dimension" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.Weight" Label="Weight" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="item.Category" Label="Category" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="item.Currency" Label="Currency" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="item.LowestRecordedPrice" Label="Lowest Price" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="item.HighestRecordedPrice" Label="Highest Price" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="item.ImageUrl" Label="Image URL" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.OfferMerchant" Label="Offer Merchant" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.OfferDomain" Label="Offer Domain" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="item.OfferTitle" Label="Offer Title" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="item.OfferCurrency" Label="Offer Currency" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="item.OfferListPrice" Label="Offer List Price" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="item.OfferPrice" Label="Offer Price" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.OfferShipping" Label="Offer Shipping" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="item.OfferCondition" Label="Offer Condition" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="item.OfferAvailability" Label="Offer Availability" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="item.OfferLink" Label="Offer Link" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="item.OfferUpdatedT" Label="Offer Updated T" />
+            </MudItem>
+        </MudGrid>
+        <div style="margin-top:1rem;">
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Save</MudButton>
+            <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Secondary" @onclick="Back">Back</MudButton>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter]
+    public string Upc { get; set; }
+
+    private UpcData? item;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id == 0)
+        {
+            item = new UpcData { Upc = Upc };
+        }
+        else
+        {
+            item = await UpcService.GetByIdAsync(Id);
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (item is null) return;
+
+        if (item.Id == 0)
+        {
+            await UpcService.CreateAsync(item);
+        }
+        else
+        {
+            await UpcService.UpdateAsync(item);
+        }
+        NavigationManager.NavigateTo("/upcs");
+    }
+
+    private void Back() => NavigationManager.NavigateTo("/upcs");
+}

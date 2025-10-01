@@ -1,0 +1,20 @@
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>Add New Location</TitleContent>
+    <DialogContent>
+        <MudTextField Label="Location Name" @bind-Value="LocationName" Required="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@string.IsNullOrWhiteSpace(LocationName)">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string LocationName { get; set; } = string.Empty;
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(LocationName));
+    void Cancel() => MudDialog.Cancel();
+}

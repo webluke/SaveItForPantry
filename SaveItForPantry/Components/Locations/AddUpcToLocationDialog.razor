@@ -1,0 +1,32 @@
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>Add UPC to Location</TitleContent>
+    <DialogContent>
+        <MudTextField Label="UPC" @bind-Value="Upc" Required="true" />
+        <MudNumericField Label="Quantity" @bind-Value="Quantity" Required="true" Min="1" />
+        <MudDatePicker Label="Expiration Date" @bind-Date="ExpirationDate" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@string.IsNullOrWhiteSpace(Upc)">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+
+    public string Upc { get; set; } = string.Empty;
+    public int Quantity { get; set; } = 1;
+    public DateTime? ExpirationDate { get; set; }
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(new DialogResultData { Upc = Upc, Quantity = Quantity, ExpirationDate = ExpirationDate }));
+    void Cancel() => MudDialog.Cancel();
+
+    public class DialogResultData
+    {
+        public string Upc { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public DateTime? ExpirationDate { get; set; }
+    }
+}
