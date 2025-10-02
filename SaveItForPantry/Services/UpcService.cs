@@ -130,28 +130,48 @@ namespace SaveItForPantry.Services
             await _db.SaveChangesAsync();
         }
 
+        public async Task<UpcData[]> SearchLocalAsync(string filter)
+        {
+            var q = _db.UpcData.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(filter))
+                q = q.Where(x => x.Upc.Contains(filter) || (x.Title ?? "").ToLower().Contains(filter.ToLower()));
+            return await q.OrderByDescending(x => x.RetrievedAt).ToArrayAsync();
+        }
+
         public async Task<UpcData[]> SearchAsync(string? upcFilter, string? titleFilter)
         {
             var q = _db.UpcData.AsQueryable();
             if (!string.IsNullOrWhiteSpace(upcFilter))
                 q = q.Where(x => x.Upc == upcFilter);
             if (!string.IsNullOrWhiteSpace(titleFilter))
-                q = q.Where(x => (x.Title ?? "").Contains(titleFilter));
+                q = q.Where(x => (x.Title ?? "").ToLower().Contains(titleFilter.ToLower()));
             return await q.OrderByDescending(x => x.RetrievedAt).ToArrayAsync();
         }
 
         public async Task<UpcData[]> SearchWithLookupAsync(string? upcFilter, string? titleFilter)
         {
-            var items = await SearchAsync(upcFilter, titleFilter);
-            if (items.Length == 0 && !string.IsNullOrWhiteSpace(upcFilter))
+            if (!string.IsNullOrWhiteSpace(upcFilter))
             {
+                var items = await SearchAsync(upcFilter, null);
+                if (items.Length > 0)
+                {
+                    return items;
+                }
+
                 var item = await GetUpcDataByUpcAsync(upcFilter);
                 if (item is not null)
                 {
                     return new[] { item };
                 }
             }
-            return items;
+
+            return await SearchAsync(null, titleFilter);
+        }
+
+        public async Task DeleteAsync(UpcData entity)
+        {
+            _db.UpcData.Remove(entity);
+            await _db.SaveChangesAsync();
         }
 
         public async Task<UpcData[]> GetAllAsync() =>

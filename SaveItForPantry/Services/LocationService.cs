@@ -54,6 +54,39 @@ namespace SaveItForPantry.Services
             }
         }
 
+        public async Task UpdateLocationAsync(Location location)
+        {
+            _db.Locations.Update(location);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task DeleteLocationAsync(int locationId)
+        {
+            var location = await _db.Locations.Include(l => l.LocationItems).FirstOrDefaultAsync(l => l.Id == locationId);
+            if (location != null)
+            {
+                _db.LocationItems.RemoveRange(location.LocationItems);
+                _db.Locations.Remove(location);
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        public async Task UpdateLocationItemAsync(LocationItem locationItem)
+        {
+            _db.LocationItems.Update(locationItem);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task RemoveUpcFromLocationAsync(int locationItemId)
+        {
+            var locationItem = await _db.LocationItems.FindAsync(locationItemId);
+            if (locationItem != null)
+            {
+                _db.LocationItems.Remove(locationItem);
+                await _db.SaveChangesAsync();
+            }
+        }
+
         private string GenerateShortId()
         {
             return Guid.NewGuid().ToString("n").Substring(0, 4);

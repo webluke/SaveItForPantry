@@ -1,0 +1,44 @@
+@using MudBlazor
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@inject UpcService UpcService
+
+<MudDialog>
+    <TitleContent>Add New UPC</TitleContent>
+    <DialogContent>
+        <MudTextField Label="UPC" @bind-Value="Upc" Required="true" />
+        <MudTextField Label="Title" @bind-Value="Title" Required="true" />
+        <MudTextField Label="Description" @bind-Value="Description" />
+        <MudTextField Label="Brand" @bind-Value="Brand" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string Upc { get; set; } = string.Empty;
+
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Brand { get; set; } = string.Empty;
+
+    private async void Submit()
+    {
+        var newUpc = new UpcData
+        {
+            Upc = Upc,
+            Title = Title,
+            Description = Description,
+            Brand = Brand,
+            RetrievedAt = DateTime.UtcNow
+        };
+
+        var createdUpc = await UpcService.CreateAsync(newUpc);
+        MudDialog.Close(DialogResult.Ok(createdUpc));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

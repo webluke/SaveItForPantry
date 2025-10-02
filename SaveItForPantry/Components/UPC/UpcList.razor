@@ -2,16 +2,23 @@
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
 @using MudBlazor
+@using SaveItForPantry.Components.UPC
 @inject UpcService UpcService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <h3>UPCs</h3>
 
 <div style="margin-bottom:1rem;">
-    <MudTextField @bind-Value="searchUpc" Label="Search UPC" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
-    <MudTextField @bind-Value="searchTitle" Label="Search Title" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="SearchAsync">Search</MudButton>
+    <MudAutocomplete T="UpcData" Label="Search" @bind-Value="selectedUpc" SearchFunc="@SearchUpcs"
+                     ToStringFunc="@(u => u?.Title ?? u?.Upc ?? string.Empty)" PreserveText="true">
+        <NotFoundContent>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" @onclick="AddNewUpc">Add New UPC</MudButton>
+        </NotFoundContent>
+    </MudAutocomplete>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="ShowAddUpcFlowDialog">Add UPC</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Info" @onclick="ShowScanBarcodeDialog">Scan Barcode</MudButton>
     <MudButton Variant="Variant.Filled" Color="Color.Secondary" @onclick="LoadAllAsync">Clear</MudButton>
 </div>
 
@@ -22,6 +29,10 @@
 else if (items.Length == 0)
 {
     <p>No UPCs found.</p>
+    @if (!string.IsNullOrWhiteSpace(searchTerm))
+    {
+        <MudButton Variant="Variant.Filled" Color="Color.Success" @onclick="AddNewUpc">Add New UPC</MudButton>
+    }
 }
 else
 {
@@ -39,7 +50,8 @@ else
             <MudTd DataLabel="Title">@context.Title</MudTd>
             <MudTd DataLabel="Brand">@context.Brand</MudTd>
             <MudTd DataLabel="Actions">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => NavigateToDetails(context.Id)">Details / Edit</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => EditUpc(context)">Edit</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Error" @onclick="() => RemoveUpc(context)">Remove</MudButton>
             </MudTd>
         </RowTemplate>
     </MudTable>
@@ -47,8 +59,8 @@ else
 
 @code {
     private UpcData[]? items;
-    private string searchUpc = "";
-    private string searchTitle = "";
+    private UpcData? selectedUpc;
+    private string searchTerm = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -58,25 +70,85 @@ else
     private async Task LoadAllAsync()
     {
         items = await UpcService.GetAllAsync();
-        searchUpc = "";
-        searchTitle = "";
+        selectedUpc = null;
+        searchTerm = "";
         StateHasChanged();
     }
 
-    private async Task SearchAsync()
+    private async Task<IEnumerable<UpcData>> SearchUpcs(string value, CancellationToken token)
     {
-        try
+        searchTerm = value;
+        if (string.IsNullOrWhiteSpace(value))
         {
-            items = await UpcService.SearchWithLookupAsync(searchUpc, null);
+            return Enumerable.Empty<UpcData>();
         }
-        catch (NoApiResultException ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Info);
-            NavigationManager.NavigateTo($"/upcs/new/{searchUpc}");
-        }
-        StateHasChanged();
+        return await UpcService.SearchLocalAsync(value);
     }
 
+    private async void ShowScanBarcodeDialog()
+    {
+        var dialog = await DialogService.ShowAsync<ScanBarcodeDialog>("Scan Barcode");
+        var result = await dialog.Result;
 
-    private void NavigateToDetails(int id) => NavigationManager.NavigateTo($"/upcs/{id}");
+        if (!result.Canceled)
+        {
+            var parameters = new DialogParameters { ["upcToSearch"] = result.Data.ToString() };
+            var addDialog = await DialogService.ShowAsync<AddUpcFlowDialog>("Add UPC", parameters);
+            var addResult = await addDialog.Result;
+
+            if (!addResult.Canceled)
+            {
+                await LoadAllAsync();
+            }
+        }
+    }
+
+    private async void ShowAddUpcFlowDialog()
+    {
+        var dialog = await DialogService.ShowAsync<AddUpcFlowDialog>("Add UPC");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadAllAsync();
+        }
+    }
+
+    private async void AddNewUpc()
+    {
+        var parameters = new DialogParameters { ["Upc"] = searchTerm };
+        var dialog = await DialogService.ShowAsync<SearchApiAndAddUpcDialog>("Add New UPC", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadAllAsync();
+        }
+    }
+
+    private async void EditUpc(UpcData upc)
+    {
+        var parameters = new DialogParameters { ["UpcData"] = upc };
+        var dialog = await DialogService.ShowAsync<EditUpcDialog>("Edit UPC", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadAllAsync();
+        }
+    }
+
+    private async void RemoveUpc(UpcData upc)
+    {
+        var yesNo = await DialogService.ShowMessageBox(
+            "Confirm Removal",
+            "Are you sure you want to remove this UPC?",
+            yesText: "Remove", cancelText: "Cancel");
+
+        if (yesNo == true)
+        {
+            await UpcService.DeleteAsync(upc);
+            await LoadAllAsync();
+        }
+    }
 }

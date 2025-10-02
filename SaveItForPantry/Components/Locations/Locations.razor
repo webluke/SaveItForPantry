@@ -30,7 +30,9 @@ else
             <MudTd DataLabel="Id">@context.Id</MudTd>
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd DataLabel="Actions">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => NavigateToDetails(context.Id)">View / Edit</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => NavigateToDetails(context.Id)">View</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" @onclick="() => EditLocation(context)">Edit</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Error" @onclick="() => RemoveLocation(context)">Remove</MudButton>
             </MudTd>
         </RowTemplate>
     </MudTable>
@@ -70,7 +72,36 @@ else
                 var newLocation = new Location { Name = newLocationName };
                 await LocationService.CreateLocationAsync(newLocation);
                 await LoadLocationsAsync();
+                StateHasChanged();
             }
+        }
+    }
+
+    private async void EditLocation(Location location)
+    {
+        var parameters = new DialogParameters { ["Location"] = location };
+        var dialog = await DialogService.ShowAsync<EditLocationDialog>("Edit Location", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadLocationsAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async void RemoveLocation(Location location)
+    {
+        var yesNo = await DialogService.ShowMessageBox(
+            "Confirm Removal",
+            $"Are you sure you want to remove the '{location.Name}' location and all its items?",
+            yesText: "Remove", cancelText: "Cancel");
+
+        if (yesNo == true)
+        {
+            await LocationService.DeleteLocationAsync(location.Id);
+            await LoadLocationsAsync();
+            StateHasChanged();
         }
     }
 }

@@ -1,0 +1,107 @@
+@using MudBlazor
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@inject UpcService UpcService
+
+<MudDialog>
+    <TitleContent>Edit UPC</TitleContent>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.Upc" Label="UPC" Disabled="UpcData.Id != 0" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.Ean" Label="EAN" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="UpcData.Title" Label="Title" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="UpcData.Description" Label="Description" Lines="5" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.Brand" Label="Brand" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.Model" Label="Model" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.Color" Label="Color" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.Size" Label="Size" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.Dimension" Label="Dimension" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.Weight" Label="Weight" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="UpcData.Category" Label="Category" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="UpcData.Currency" Label="Currency" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="UpcData.LowestRecordedPrice" Label="Lowest Price" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="UpcData.HighestRecordedPrice" Label="Highest Price" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="UpcData.ImageUrl" Label="Image URL" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.OfferMerchant" Label="Offer Merchant" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.OfferDomain" Label="Offer Domain" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="UpcData.OfferTitle" Label="Offer Title" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="UpcData.OfferCurrency" Label="Offer Currency" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="UpcData.OfferListPrice" Label="Offer List Price" />
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudTextField @bind-Value="UpcData.OfferPrice" Label="Offer Price" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.OfferShipping" Label="Offer Shipping" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="UpcData.OfferCondition" Label="Offer Condition" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="UpcData.OfferAvailability" Label="Offer Availability" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="UpcData.OfferLink" Label="Offer Link" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="UpcData.OfferUpdatedT" Label="Offer Updated T" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public UpcData UpcData { get; set; } = new();
+
+    private async void Submit()
+    {
+        await UpcService.UpdateAsync(UpcData);
+        MudDialog.Close(DialogResult.Ok(UpcData));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

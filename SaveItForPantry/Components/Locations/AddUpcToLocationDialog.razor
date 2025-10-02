@@ -1,26 +1,75 @@
+@using SaveItForPantry.Components.UPC
 @using MudBlazor
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@inject UpcService UpcService
+@inject IDialogService DialogService
 
 <MudDialog>
-    <TitleContent>Add UPC to Location</TitleContent>
+    <TitleContent>Add Item to Location</TitleContent>
     <DialogContent>
-        <MudTextField Label="UPC" @bind-Value="Upc" Required="true" />
+        <MudAutocomplete T="UpcData" Label="Item" @bind-Value="SelectedUpc" SearchFunc="@SearchUpcs"
+                         ToStringFunc="@(u => u?.Title ?? u?.Upc ?? string.Empty)" Required="true" />
+        @if (SelectedUpc == null && !string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            <MudButton OnClick="SearchApiAndAddUpc">Search API and Add UPC</MudButton>
+        }
         <MudNumericField Label="Quantity" @bind-Value="Quantity" Required="true" Min="1" />
         <MudDatePicker Label="Expiration Date" @bind-Date="ExpirationDate" />
     </DialogContent>
     <DialogActions>
         <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@string.IsNullOrWhiteSpace(Upc)">Add</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="SelectedUpc == null">Add</MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string Upc { get; set; } = string.Empty;
 
-    public string Upc { get; set; } = string.Empty;
+    public UpcData? SelectedUpc { get; set; }
     public int Quantity { get; set; } = 1;
     public DateTime? ExpirationDate { get; set; }
+    private string SearchTerm { get; set; } = string.Empty;
 
-    void Submit() => MudDialog.Close(DialogResult.Ok(new DialogResultData { Upc = Upc, Quantity = Quantity, ExpirationDate = ExpirationDate }));
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrWhiteSpace(Upc))
+        {
+            SearchTerm = Upc;
+            var results = await SearchUpcs(Upc, CancellationToken.None);
+            if (results.Any())
+            {
+                SelectedUpc = results.First();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task<IEnumerable<UpcData>> SearchUpcs(string value, CancellationToken token)
+    {
+        SearchTerm = value;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Enumerable.Empty<UpcData>();
+        }
+        var results = await UpcService.SearchLocalAsync(value);
+        return results;
+    }
+
+    private async void SearchApiAndAddUpc()
+    {
+        var parameters = new DialogParameters { ["Upc"] = SearchTerm };
+        var dialog = await DialogService.ShowAsync<SearchApiAndAddUpcDialog>("Search API and Add UPC", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            SelectedUpc = result.Data as UpcData;
+        }
+    }
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(new DialogResultData { Upc = SelectedUpc!.Upc, Quantity = Quantity, ExpirationDate = ExpirationDate }));
     void Cancel() => MudDialog.Cancel();
 
     public class DialogResultData

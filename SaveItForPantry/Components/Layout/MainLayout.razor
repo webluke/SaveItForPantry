@@ -7,7 +7,8 @@
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudStaticNavDrawerToggle DrawerId="nav-drawer" Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" />
-        <MudText Typo="Typo.h5" Class="ml-3">Save It For Pantry</MudText>
+        <img src="/Images/pantry.svg" alt="Pantry Logo" style="height: 40px; margin-left: 16px; margin-right: 8px;" />
+        <MudText Typo="Typo.h5" Class="align-self-center">Save It For Pantry</MudText>
         <MudSpacer />
     </MudAppBar>
     <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">

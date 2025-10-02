@@ -1,0 +1,57 @@
+@using MudBlazor
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@inject UpcService UpcService
+@inject IDialogService DialogService
+
+<MudDialog>
+    <TitleContent>Add UPC</TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="upcToSearch" Label="UPC" Required="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SearchAndEditUpc">Search</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public string upcToSearch { get; set; } = string.Empty;
+
+    private async void SearchAndEditUpc()
+    {
+        UpcData? upcData = null;
+
+        var localResults = await UpcService.SearchLocalAsync(upcToSearch);
+        if (localResults.Any())
+        {
+            upcData = localResults.First();
+        }
+        else
+        {
+            upcData = await UpcService.GetUpcDataByUpcAsync(upcToSearch);
+        }
+
+        if (upcData == null)
+        {
+            upcData = new UpcData { Upc = upcToSearch };
+        }
+
+        var parameters = new DialogParameters { ["UpcData"] = upcData };
+        var dialog = await DialogService.ShowAsync<EditUpcDialog>("Edit UPC", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            MudDialog.Cancel();
+        }
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

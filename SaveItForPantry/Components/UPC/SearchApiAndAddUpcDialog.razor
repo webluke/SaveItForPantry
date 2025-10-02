@@ -1,0 +1,77 @@
+@using MudBlazor
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@inject UpcService UpcService
+
+<MudDialog>
+    <TitleContent>Search API and Add UPC</TitleContent>
+    <DialogContent>
+        @if (IsLoading)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else if (UpcData != null)
+        {
+            <MudTextField Label="UPC" @bind-Value="UpcData.Upc" Required="true" />
+            <MudTextField Label="Title" @bind-Value="UpcData.Title" Required="true" />
+            <MudTextField Label="Description" @bind-Value="UpcData.Description" />
+            <MudTextField Label="Brand" @bind-Value="UpcData.Brand" />
+        }
+        else
+        {
+            <MudText>UPC not found. You can add it manually.</MudText>
+            <MudTextField Label="UPC" @bind-Value="ManualUpc" Required="true" />
+            <MudTextField Label="Title" @bind-Value="ManualTitle" Required="true" />
+            <MudTextField Label="Description" @bind-Value="ManualDescription" />
+            <MudTextField Label="Brand" @bind-Value="ManualBrand" />
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string Upc { get; set; } = string.Empty;
+
+    private bool IsLoading { get; set; } = true;
+    private UpcData? UpcData { get; set; }
+
+    private string ManualUpc { get; set; } = string.Empty;
+    private string ManualTitle { get; set; } = string.Empty;
+    private string ManualDescription { get; set; } = string.Empty;
+    private string ManualBrand { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        UpcData = await UpcService.GetUpcDataByUpcAsync(Upc);
+        IsLoading = false;
+    }
+
+    private async void Submit()
+    {
+        if (UpcData != null)
+        {
+            var createdUpc = await UpcService.CreateAsync(UpcData);
+            MudDialog.Close(DialogResult.Ok(createdUpc));
+        }
+        else
+        {
+            var newUpc = new UpcData
+            {
+                Upc = ManualUpc,
+                Title = ManualTitle,
+                Description = ManualDescription,
+                Brand = ManualBrand,
+                RetrievedAt = DateTime.UtcNow
+            };
+
+            var createdUpc = await UpcService.CreateAsync(newUpc);
+            MudDialog.Close(DialogResult.Ok(createdUpc));
+        }
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

@@ -1,0 +1,29 @@
+@using MudBlazor
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@inject LocationService LocationService
+
+<MudDialog>
+    <TitleContent>Edit Item</TitleContent>
+    <DialogContent>
+        <MudNumericField @bind-Value="LocationItem.Quantity" Label="Quantity" Required="true" Min="1" />
+        <MudDatePicker @bind-Date="LocationItem.ExpirationDate" Label="Expiration Date" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public LocationItem LocationItem { get; set; } = new();
+
+    private async void Submit()
+    {
+        await LocationService.UpdateLocationItemAsync(LocationItem);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

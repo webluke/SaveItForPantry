@@ -1,0 +1,44 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+<MudDialog>
+    <TitleContent>Scan Barcode</TitleContent>
+    <DialogContent>
+        <div id="reader" style="width: 100%;"></div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private DotNetObjectReference<ScanBarcodeDialog>? dotNetHelper;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetHelper = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("startScanner", dotNetHelper);
+        }
+    }
+
+    [JSInvokable]
+    public void OnBarcodeScanned(string barcode)
+    {
+        MudDialog.Close(DialogResult.Ok(barcode));
+    }
+
+    void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    public void Dispose()
+    {
+        JSRuntime.InvokeVoidAsync("stopScanner");
+        dotNetHelper?.Dispose();
+    }
+}
