@@ -1,0 +1,209 @@
+@page "/shoppinglists/{Id:int}"
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@using MudBlazor
+@using SaveItForPantry.Components.UPC
+@using Microsoft.JSInterop
+@inject ShoppingListService ShoppingListService
+@inject UpcService UpcService
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+<PageTitle>Shopping List Details</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">Shopping List Details</MudText>
+@if (shoppingList == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <MudText Typo="Typo.h4">@shoppingList.Name</MudText>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => AddItemToList()">Add Item to List</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Info" @onclick="ShowScanBarcodeDialog">Scan Barcode</MudButton>
+
+    @if (shoppingList.Items.Count == 0)
+    {
+        <p>No items in this shopping list.</p>
+    }
+    else
+    {
+        <MudTable Items="shoppingList.Items" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>UPC</MudTh>
+                <MudTh>Title</MudTh>
+                <MudTh>Quantity To Buy</MudTh>
+                <MudTh>In Cart</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="UPC">@(context.UpcData?.Upc ?? "N/A")</MudTd>
+                <MudTd DataLabel="Title">@(context.UpcData?.Title ?? "Unknown")</MudTd>
+                <MudTd DataLabel="Quantity To Buy">@context.Quantity</MudTd>
+                <MudTd DataLabel="In Cart">
+                    <MudSwitch @bind-Value="@context.InCart" @onclick="() => UpdateInCart(context)" Color="Color.Primary" />
+                </MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="() => EditItem(context)">Edit</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" @onclick="() => RemoveItem(context)">Remove</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+}
+</MudContainer>
+@code {
+    [Parameter] 
+    public int Id { get; set; }
+
+    private ShoppingList? shoppingList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadShoppingListAsync();
+    }
+
+    private async Task LoadShoppingListAsync()
+    {
+        shoppingList = await ShoppingListService.GetShoppingListByIdAsync(Id);
+    }
+
+    private async Task AddItemToList(string upc = "")
+    {
+        var parameters = new DialogParameters
+        {
+            ["ShoppingListId"] = Id
+        };
+        if (!string.IsNullOrWhiteSpace(upc))
+        {
+            parameters["Upc"] = upc;
+        }
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddItemToShoppingListDialog>("Add Item to Shopping List", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var dialogData = (AddItemToShoppingListDialog.DialogResultData)result.Data;
+            if (dialogData != null)
+            {
+                try
+                {
+                    var upcData = await UpcService.GetUpcDataByUpcAsync(dialogData.Upc);
+                    if (upcData != null)
+                    {
+                        await ShoppingListService.AddItemToShoppingListAsync(
+                            dialogData.ShoppingListId,
+                            upcData.Id,
+                            dialogData.Quantity
+                        );
+                        Snackbar.Add("Item added to list successfully!", Severity.Success);
+                        await LoadShoppingListAsync();
+                        StateHasChanged();
+                    }
+                    else
+                    {
+                        Snackbar.Add("UPC not found.", Severity.Error);
+                    }
+                }
+                catch (NoApiResultException ex)
+                {
+                    Snackbar.Add(ex.Message + ". Please add the UPC first.", Severity.Warning);
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add($"Error adding UPC: {ex.Message}", Severity.Error);
+                }
+            }
+        }
+    }
+
+    private async Task UpdateInCart(ShoppingListItem item)
+    {
+        await ShoppingListService.UpdateShoppingListItemAsync(item);
+        Snackbar.Add("Item updated.", Severity.Success);
+        await LoadShoppingListAsync();
+        StateHasChanged();
+    }
+
+    private async Task EditItem(ShoppingListItem item)
+    {
+        var parameters = new DialogParameters { ["Item"] = item };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<EditShoppingListItemDialog>("Edit Item Quantity", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data != null)
+        {
+            var updatedItem = (ShoppingListItem)result.Data;
+            if (updatedItem != null)
+            {
+                await ShoppingListService.UpdateShoppingListItemAsync(updatedItem);
+                Snackbar.Add("Item updated!", Severity.Success);
+                await LoadShoppingListAsync();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task RemoveItem(ShoppingListItem item)
+    {
+        var yesNo = await DialogService.ShowMessageBox(
+            "Confirm Removal",
+            "Are you sure you want to remove this item from the shopping list?",
+            yesText: "Remove", cancelText: "Cancel");
+
+        if (yesNo == true)
+        {
+            await ShoppingListService.RemoveItemFromShoppingListAsync(item.Id);
+            await LoadShoppingListAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async void ShowScanBarcodeDialog()
+    {
+        var dialog = await DialogService.ShowAsync<ScanBarcodeDialog>("Scan Barcode");
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            string upc = result.Data.ToString();
+            UpcData? upcData = null;
+
+            var localResults = await UpcService.SearchLocalAsync(upc);
+            if (localResults.Any())
+            {
+                upcData = localResults.First();
+            }
+            else
+            {
+                upcData = await UpcService.GetUpcDataByUpcAsync(upc);
+            }
+
+            if (upcData == null)
+            {
+                var parameters = new DialogParameters { ["Upc"] = upc };
+                var editDialog = await DialogService.ShowAsync<EditUpcDialog>("Create UPC", parameters);
+                var editResult = await editDialog.Result;
+                if (!editResult.Canceled)
+                {
+                    upcData = editResult.Data as UpcData;
+                }
+            }
+
+            if (upcData != null)
+            {
+                await AddItemToList(upcData.Upc);
+            }
+        }
+    }
+
+}

@@ -5,8 +5,13 @@
 @using MudBlazor
 @inject UpcService UpcService
 @inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Authorization
 
-<h3>UPC Details</h3>
+@attribute [Authorize]
+<PageTitle>UPC Details</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">UPC Details</MudText>
 
 @if (item is null)
 {
@@ -101,7 +106,7 @@ else
         </div>
     </EditForm>
 }
-
+</MudContainer>
 @code {
     [Parameter]
     public int Id { get; set; }

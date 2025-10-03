@@ -1,0 +1,120 @@
+@page "/shoppinglists"
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@using MudBlazor
+@inject ShoppingListService ShoppingListService
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+<PageTitle>Shopping Lists</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">Shopping Lists</MudText>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="AddShoppingList">Add New Shopping List</MudButton>
+
+@if (shoppingLists == null)
+{
+    <p>Loading...</p>
+}
+else if (shoppingLists.Count == 0)
+{
+    <p>No shopping lists found.</p>
+}
+else
+{
+    <MudTable Items="shoppingLists" Hover="true" Breakpoint="Breakpoint.Sm">
+        <HeaderContent>
+            <MudTh>Id</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Items (Types / Total)</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Items (Types / Total)">@context.Items.Count / @context.Items.Sum(i => i.Quantity)</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="() => NavigateToDetails(context.Id)">View / Edit</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Info" Size="Size.Small" @onclick="() => EditShoppingList(context)">Edit</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" @onclick="() => RemoveShoppingList(context)">Remove</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+</MudContainer>
+@code {
+    private List<ShoppingList>? shoppingLists;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadShoppingListsAsync();
+    }
+
+    private async Task LoadShoppingListsAsync()
+    {
+        shoppingLists = await ShoppingListService.GetShoppingListsAsync();
+    }
+
+    private void NavigateToDetails(int id)
+    {
+        NavigationManager.NavigateTo($"/shoppinglists/{id}");
+    }
+
+    private async Task AddShoppingList()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddShoppingListDialog>("Add New Shopping List", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var name = result.Data.ToString();
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                var newList = new ShoppingList { Name = name };
+                await ShoppingListService.CreateShoppingListAsync(newList);
+                await LoadShoppingListsAsync();
+            }
+        }
+    }
+
+    private async Task EditShoppingList(ShoppingList list)
+    {
+        var parameters = new DialogParameters { ["ListName"] = list.Name };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<EditShoppingListDialog>("Edit Shopping List", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var newName = result.Data.ToString();
+            if (!string.IsNullOrWhiteSpace(newName) && newName != list.Name)
+            {
+                list.Name = newName;
+                await ShoppingListService.UpdateShoppingListAsync(list);
+                await LoadShoppingListsAsync();
+                Snackbar.Add("Shopping list updated!", Severity.Success);
+            }
+        }
+    }
+
+    private async Task RemoveShoppingList(ShoppingList list)
+    {
+        var yesNo = await DialogService.ShowMessageBox(
+            "Confirm Removal",
+            $"Are you sure you want to remove '{list.Name}' and all its items?",
+            yesText: "Remove", cancelText: "Cancel");
+
+        if (yesNo == true)
+        {
+            await ShoppingListService.DeleteShoppingListAsync(list.Id);
+            await LoadShoppingListsAsync();
+            Snackbar.Add("Shopping list removed!", Severity.Success);
+        }
+    }
+}

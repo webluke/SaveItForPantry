@@ -3,9 +3,14 @@
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
 @using System.Linq
+@using MudBlazor
 @inject LocationService LocationService
+@inject ShoppingListService ShoppingListService
 @inject NavigationManager NavigationManager
 @implements IDisposable
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -22,20 +27,31 @@
     }
     else
     {
-        <!-- Location Item Counts -->
-        <MudText Typo="Typo.h5" GutterBottom="true" Class="mt-4">Items per Location</MudText>
-        <MudTable Items="locations" Hover="true" Breakpoint="Breakpoint.Sm">
-            <HeaderContent>
-                <MudTh>Name</MudTh>
-                <MudTh>Items Count</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Name">
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" @onclick="() => NavigateToLocation(context.Id)">@context.Name</MudButton>
-                </MudTd>
-                <MudTd DataLabel="Items Count">@context.LocationItems.Count</MudTd>
-            </RowTemplate>
-        </MudTable>
+        <!-- Shopping Lists -->
+        <MudText Typo="Typo.h5" GutterBottom="true" Class="mt-4">Shopping Lists</MudText>
+        @if (shoppingLists == null)
+        {
+            <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+        }
+        else if (!shoppingLists.Any())
+        {
+            <MudAlert Severity="Severity.Info">No shopping lists yet. <MudLink Href="/shoppinglists">Create a shopping list</MudLink></MudAlert>
+        }
+        else
+        {
+            <MudTable Items="shoppingLists" Hover="true" Breakpoint="Breakpoint.Sm">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Items Count</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" @onclick="() => NavigateToShoppingList(context.Id)">@context.Name</MudButton>
+                    </MudTd>
+                    <MudTd DataLabel="Items Count">@context.Items.Count</MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
 
         <!-- Expiring Items -->
         <MudText Typo="Typo.h5" GutterBottom="true" Class="mt-4">Items Expiring Soon (within 28 days)</MudText>
@@ -63,6 +79,20 @@
             </MudTable>
         }
 
+        <!-- Location Item Counts -->
+        <MudText Typo="Typo.h5" GutterBottom="true" Class="mt-4">Items per Location</MudText>
+        <MudTable Items="locations" Hover="true" Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Items Count</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" @onclick="() => NavigateToLocation(context.Id)">@context.Name</MudButton>
+                </MudTd>
+                <MudTd DataLabel="Items Count">@context.LocationItems.Count</MudTd>
+            </RowTemplate>
+        </MudTable>
     }
 </MudContainer>
 
@@ -70,10 +100,12 @@
     private List<Location>? locations;
     private List<LocationSummary> locationSummaries = new();
     private List<ExpiringItem> expiringItems = new();
+    private List<ShoppingList>? shoppingLists;
 
     protected override async Task OnInitializedAsync()
     {
         locations = await LocationService.GetLocationsAsync();
+        shoppingLists = await ShoppingListService.GetShoppingListsAsync();
         if (locations != null)
         {
             locationSummaries = locations.Select(l => new LocationSummary { Name = l.Name, Count = l.LocationItems.Count }).ToList();
@@ -99,6 +131,11 @@
     private void NavigateToLocation(int id)
     {
         NavigationManager.NavigateTo($"/locations/{id}");
+    }
+
+    private void NavigateToShoppingList(int id)
+    {
+        NavigationManager.NavigateTo($"/shoppinglists/{id}");
     }
 
     public class LocationSummary

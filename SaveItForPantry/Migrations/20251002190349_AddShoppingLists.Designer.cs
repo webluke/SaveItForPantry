@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SaveItForPantry.Data;
 
@@ -11,9 +12,11 @@ using SaveItForPantry.Data;
 namespace SaveItForPantry.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251002190349_AddShoppingLists")]
+    partial class AddShoppingLists
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -296,13 +299,7 @@ namespace SaveItForPantry.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("DateAdded")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("InCart")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("Quantity")
+                    b.Property<int>("QuantityToBuy")
                         .HasColumnType("int");
 
                     b.Property<int>("ShoppingListId")

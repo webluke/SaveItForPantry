@@ -8,5 +8,13 @@ namespace SaveItForPantry.Data
         public DbSet<UpcData> UpcData { get; set; }
         public DbSet<Location> Locations { get; set; }
         public DbSet<LocationItem> LocationItems { get; set; } = null!;
+        public DbSet<ShoppingList> ShoppingLists { get; set; } = null!;
+        public DbSet<ShoppingListItem> ShoppingListItems { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+            // ...existing code...
+        }
     }
 }

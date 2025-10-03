@@ -1,0 +1,123 @@
+@using SaveItForPantry.Components.UPC
+@using MudBlazor
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@inject UpcService UpcService
+@inject ShoppingListService ShoppingListService
+@inject IDialogService DialogService
+
+<MudDialog>
+    <TitleContent>Add Item to Shopping List</TitleContent>
+    <DialogContent>
+        @if (ShoppingListId == null)
+        {
+            <MudSelect T="int" Label="Shopping List" @bind-Value="selectedShoppingListId" Required="true">
+                @foreach (var list in shoppingLists)
+                {
+                    <MudSelectItem T="int" Value="@list.Id">@list.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+        <MudAutocomplete T="UpcData" Label="Item" @bind-Value="SelectedUpc" SearchFunc="@SearchUpcs"
+                         ToStringFunc="@(u => u?.Title ?? u?.Upc ?? string.Empty)" Required="true"
+                         CoerceText="false" />
+        @if (SelectedUpc == null && !string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            <MudButton OnClick="SearchApiAndAddUpc">Search API and Add UPC</MudButton>
+        }
+        <MudNumericField Label="Quantity To Buy" @bind-Value="Quantity" Required="true" Min="1" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(SelectedUpc?.Id <= 0)">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string Upc { get; set; } = string.Empty;
+    [Parameter] public int? ShoppingListId { get; set; }
+
+    private List<ShoppingList> shoppingLists = new();
+    private int selectedShoppingListId;
+
+    public UpcData? SelectedUpc { get; set; }
+    private int Quantity { get; set; } = 1;
+    private string SearchTerm { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ShoppingListId == null)
+        {
+            shoppingLists = await ShoppingListService.GetShoppingListsAsync();
+            if (shoppingLists.Any())
+            {
+                selectedShoppingListId = shoppingLists.First().Id;
+            }
+        }
+        else
+        {
+            selectedShoppingListId = ShoppingListId.Value;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrWhiteSpace(Upc))
+        {
+            SearchTerm = Upc;
+            var results = await SearchUpcs(Upc, CancellationToken.None);
+            if (results.Any())
+            {
+                SelectedUpc = results.First();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task LoadUpcByInitialAsync()
+    {
+        if (!string.IsNullOrEmpty(Upc))
+        {
+            var upcData = await UpcService.GetUpcDataByUpcAsync(Upc);
+            if (upcData != null)
+            {
+                SelectedUpc = upcData;
+            }
+        }
+    }
+
+    private async Task<IEnumerable<UpcData>> SearchUpcs(string value, CancellationToken token)
+    {
+        SearchTerm = value;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Enumerable.Empty<UpcData>();
+        }
+        var results = await UpcService.SearchLocalAsync(value);
+        return results;
+    }
+
+    private async void SearchApiAndAddUpc()
+    {
+        var parameters = new DialogParameters { ["Upc"] = SearchTerm };
+        var dialog = await DialogService.ShowAsync<SearchApiAndAddUpcDialog>("Search API and Add UPC", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            SelectedUpc = result.Data as UpcData;
+        }
+    }
+
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(new DialogResultData { Upc = SelectedUpc!.Upc, Quantity = Quantity, ShoppingListId = selectedShoppingListId }));
+    void Cancel() => MudDialog.Cancel();
+
+    public class DialogResultData
+    {
+        public string Upc { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public int ShoppingListId { get; set; }
+    }
+}

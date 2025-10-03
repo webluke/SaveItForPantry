@@ -5,7 +5,14 @@
 @inject LocationService LocationService
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
+@using Microsoft.AspNetCore.Authorization
 
+@attribute [Authorize]
+
+<PageTitle>Dashboard</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">Pantry Dashboard</MudText>
 <h3>Locations</h3>
 
 <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="AddLocation">Add New Location</MudButton>
@@ -30,14 +37,14 @@ else
             <MudTd DataLabel="Id">@context.Id</MudTd>
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd DataLabel="Actions">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => NavigateToDetails(context.Id)">View</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary" @onclick="() => EditLocation(context)">Edit</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Error" @onclick="() => RemoveLocation(context)">Remove</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="() => NavigateToDetails(context.Id)">View</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" @onclick="() => EditLocation(context)">Edit</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" @onclick="() => RemoveLocation(context)">Remove</MudButton>
             </MudTd>
         </RowTemplate>
     </MudTable>
 }
-
+</MudContainer>
 @code {
     private List<Location>? locations;
 

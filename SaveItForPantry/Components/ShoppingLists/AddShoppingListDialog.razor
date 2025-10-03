@@ -1,0 +1,20 @@
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>Add New Shopping List</TitleContent>
+    <DialogContent>
+        <MudTextField Label="Shopping List Name" @bind-Value="ListName" Required="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@string.IsNullOrWhiteSpace(ListName)">Add</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string ListName { get; set; } = string.Empty;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(ListName));
+    private void Cancel() => MudDialog.Cancel();
+}

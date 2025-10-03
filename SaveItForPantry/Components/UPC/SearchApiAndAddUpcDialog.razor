@@ -47,6 +47,10 @@
     protected override async Task OnInitializedAsync()
     {
         UpcData = await UpcService.GetUpcDataByUpcAsync(Upc);
+        if (UpcData == null)
+        {
+            ManualUpc = Upc;
+        }
         IsLoading = false;
     }
 

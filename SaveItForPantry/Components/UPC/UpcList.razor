@@ -7,19 +7,25 @@
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
+@using Microsoft.AspNetCore.Authorization
 
-<h3>UPCs</h3>
+@attribute [Authorize]
+
+<PageTitle>UPC List</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">UPC List</MudText>
 
 <div style="margin-bottom:1rem;">
     <MudAutocomplete T="UpcData" Label="Search" @bind-Value="selectedUpc" SearchFunc="@SearchUpcs"
                      ToStringFunc="@(u => u?.Title ?? u?.Upc ?? string.Empty)" PreserveText="true">
         <NotFoundContent>
-            <MudButton Variant="Variant.Filled" Color="Color.Success" @onclick="AddNewUpc">Add New UPC</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" @onclick="AddNewUpc">Add New UPC</MudButton>
         </NotFoundContent>
     </MudAutocomplete>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="ShowAddUpcFlowDialog">Add UPC</MudButton>
-    <MudButton Variant="Variant.Filled" Color="Color.Info" @onclick="ShowScanBarcodeDialog">Scan Barcode</MudButton>
-    <MudButton Variant="Variant.Filled" Color="Color.Secondary" @onclick="LoadAllAsync">Clear</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="ShowAddUpcFlowDialog">Add UPC</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Info" Size="Size.Small" @onclick="ShowScanBarcodeDialog">Scan Barcode</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" @onclick="LoadAllAsync">Clear</MudButton>
 </div>
 
 @if (items is null)
@@ -38,14 +44,12 @@ else
 {
     <MudTable Items="items" Hover="true" Breakpoint="Breakpoint.Sm">
         <HeaderContent>
-            <MudTh>Id</MudTh>
             <MudTh>UPC</MudTh>
             <MudTh>Title</MudTh>
             <MudTh>Brand</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="Id">@context.Id</MudTd>
             <MudTd DataLabel="UPC">@context.Upc</MudTd>
             <MudTd DataLabel="Title">@context.Title</MudTd>
             <MudTd DataLabel="Brand">@context.Brand</MudTd>
@@ -56,7 +60,7 @@ else
         </RowTemplate>
     </MudTable>
 }
-
+</MudContainer>
 @code {
     private UpcData[]? items;
     private UpcData? selectedUpc;

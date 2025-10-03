@@ -1,0 +1,38 @@
+@using MudBlazor
+@using SaveItForPantry.Data
+
+<MudDialog>
+    <TitleContent>Edit Item Quantity</TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body1" Class="mb-2">@Item.UpcData?.Title (UPC: @Item.UpcData?.Upc)</MudText>
+        <MudNumericField Label="Quantity To Buy" @bind-Value="QuantityToBuy" Required="true" Min="1" />
+        <MudSwitch @bind-Value="InCart" Label="In Cart" Color="Color.Primary" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ShoppingListItem Item { get; set; } = default!;
+
+    private int QuantityToBuy { get; set; }
+    private bool InCart { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        QuantityToBuy = Item.Quantity;
+        InCart = Item.InCart;
+    }
+
+    private void Submit()
+    {
+        Item.Quantity = QuantityToBuy;
+        Item.InCart = InCart;
+        MudDialog.Close(DialogResult.Ok(Item));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

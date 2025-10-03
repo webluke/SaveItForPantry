@@ -49,6 +49,7 @@ builder.Services.AddHttpClient("upc", client =>
 });
 builder.Services.AddScoped<UpcService>();
 builder.Services.AddScoped<LocationService>();
+builder.Services.AddScoped<ShoppingListService>();
 
 var app = builder.Build();
 

@@ -77,6 +77,16 @@ namespace SaveItForPantry.Services
             await _db.SaveChangesAsync();
         }
 
+        public async Task DecrementItemQuantityAsync(int locationItemId)
+        {
+            var locationItem = await _db.LocationItems.FindAsync(locationItemId);
+            if (locationItem != null)
+            { 
+                locationItem.Quantity--;
+                await _db.SaveChangesAsync();
+            }
+        }
+
         public async Task RemoveUpcFromLocationAsync(int locationItemId)
         {
             var locationItem = await _db.LocationItems.FindAsync(locationItemId);

@@ -3,14 +3,23 @@
 @using SaveItForPantry.Services
 @using MudBlazor
 @using SaveItForPantry.Components.UPC
+@using SaveItForPantry.Components.ShoppingLists
 @using Microsoft.JSInterop
 @inject LocationService LocationService
 @inject UpcService UpcService
+@inject ShoppingListService ShoppingListService
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
+@using Microsoft.AspNetCore.Authorization
 
+@attribute [Authorize]
+
+<PageTitle>Dashboard</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">Pantry Dashboard</MudText>
 <h3>Location Details</h3>
 
 @if (location is null)
@@ -21,7 +30,7 @@ else
 {
     <MudText Typo="Typo.h4">@location.Name</MudText>
 
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick='() => AddUpcToLocation("")'>Add UPC to Location</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick='() => AddUpcToLocation("")'>Add Item to Location</MudButton>
     <MudButton Variant="Variant.Filled" Color="Color.Info" @onclick="ShowScanBarcodeDialog">Scan Barcode</MudButton>
 
     @if (location.LocationItems.Count == 0)
@@ -48,15 +57,16 @@ else
                 <MudTd DataLabel="Expiration Date">@context.ExpirationDate?.ToShortDateString()</MudTd>
                 <MudTd DataLabel="Short ID">@context.ShortId</MudTd>
                 <MudTd DataLabel="Actions">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => EditLocationItem(context)">Edit</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small" @onclick="() => UseItem(context)">Use</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="() => EditLocationItem(context)">Edit</MudButton>
                     <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" @onclick="() => PrintLabel(context)">Print Label</MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Error" @onclick="() => RemoveLocationItem(context)">Remove</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" @onclick="() => RemoveLocationItem(context)">Remove</MudButton>
                 </MudTd>
             </RowTemplate>
         </MudTable>
     }
 }
-
+</MudContainer>
 @code {
     [Parameter]
     public int Id { get; set; }
@@ -131,6 +141,47 @@ else
         {
             await LoadLocationDetailsAsync();
             StateHasChanged();
+        }
+    }
+
+    private async void UseItem(LocationItem item)
+    {
+        if (item.Quantity > 1)
+        {
+            await LocationService.DecrementItemQuantityAsync(item.Id);
+            await LoadLocationDetailsAsync();
+            StateHasChanged();
+        }
+        else
+        {
+            var parameters = new DialogParameters
+            {
+                ["Upc"] = item.UpcData.Upc,
+            };
+            var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+            var dialog = await DialogService.ShowAsync<AddItemToShoppingListDialog>("Add to Shopping List", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result.Canceled)
+            {
+                var dialogData = (AddItemToShoppingListDialog.DialogResultData)result.Data;
+                if (dialogData != null)
+                {
+                    var upcData = await UpcService.GetUpcDataByUpcAsync(dialogData.Upc);
+                    if (upcData != null)
+                    {
+                        await ShoppingListService.AddItemToShoppingListAsync(
+                            dialogData.ShoppingListId,
+                            upcData.Id,
+                            dialogData.Quantity
+                        );
+                        await LocationService.RemoveUpcFromLocationAsync(item.Id);
+                        await LoadLocationDetailsAsync();
+                        StateHasChanged();
+                        Snackbar.Add("Item added to shopping list and removed from location.", Severity.Success);
+                    }
+                }
+            }
         }
     }
 
