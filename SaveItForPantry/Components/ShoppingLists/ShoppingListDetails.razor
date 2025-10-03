@@ -14,6 +14,8 @@
 
 @attribute [Authorize]
 
+<script src="js/print.js"></script>
+
 <PageTitle>Shopping List Details</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
@@ -28,6 +30,7 @@ else
 
     <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => AddItemToList()">Add Item to List</MudButton>
     <MudButton Variant="Variant.Filled" Color="Color.Info" @onclick="ShowScanBarcodeDialog">Scan Barcode</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Success" @onclick="PrintShoppingList">Print</MudButton>
     <MudButton  Variant="Variant.Filled" Color="Color.Secondary" @onclick="Back">Back</MudButton>
 
     @if (shoppingList.Items.Count == 0)
@@ -223,4 +226,50 @@ else
     }
 
     private void Back() => NavigationManager.NavigateTo("/shoppinglists");
+
+    private async Task PrintShoppingList()
+    {
+        var listName = shoppingList?.Name ?? "Shopping List";
+        var itemsHtml = string.Join("", shoppingList.Items.Select(item => $@"
+            <tr>
+                <td><img src='{item.UpcData.ImageUrl}' height='50px' width='50px' /></td>
+                <td>{item.UpcData.Title}</td>
+                <td>{item.Quantity}</td>
+                <td></td>
+            </tr>"));
+
+        var printHtml = $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Print Shopping List</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; }}
+                h1 {{ text-align: center; }}
+                table {{ width: 100%; border-collapse: collapse; }}
+                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+                th {{ background-color: #f2f2f2; }}
+            </style>
+        </head>
+        <body>
+            <h1>{listName}</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>In Cart</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {itemsHtml}
+                </tbody>
+            </table>
+        </body>
+        </html>
+        ";
+
+        await JSRuntime.InvokeVoidAsync("printHtml", printHtml);
+    }
 }
