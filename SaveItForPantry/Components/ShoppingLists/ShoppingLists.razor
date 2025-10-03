@@ -18,11 +18,11 @@
 
 @if (shoppingLists == null)
 {
-    <p>Loading...</p>
+        <MudAlert Severity="Severity.Info">Loading . . . </MudAlert>
 }
 else if (shoppingLists.Count == 0)
 {
-    <p>No shopping lists found.</p>
+        <MudAlert Severity="Severity.Info">No Shopping Lists Yet.</MudAlert>
 }
 else
 {
@@ -117,4 +117,5 @@ else
             Snackbar.Add("Shopping list removed!", Severity.Success);
         }
     }
+
 }

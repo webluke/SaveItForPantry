@@ -11,9 +11,9 @@
 
 @attribute [Authorize]
 
-<PageTitle>UPC List</PageTitle>
+<PageTitle>Product List</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+<MudContainer Fixed="true" MaxWidth="MaxWidth.Large" Class="mt-4">
     <MudText Typo="Typo.h3" GutterBottom="true">UPC List</MudText>
 
 <div style="margin-bottom:1rem;">
@@ -24,32 +24,49 @@
         </NotFoundContent>
     </MudAutocomplete>
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="ShowAddUpcFlowDialog">Add UPC</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="AddProduct">Add Product</MudButton>
     <MudButton Variant="Variant.Filled" Color="Color.Info" Size="Size.Small" @onclick="ShowScanBarcodeDialog">Scan Barcode</MudButton>
     <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" @onclick="LoadAllAsync">Clear</MudButton>
 </div>
 
 @if (items is null)
 {
-    <p>Loading...</p>
+    <MudAlert Severity="Severity.Info">Loading . . . </MudAlert>
 }
 else if (items.Length == 0)
 {
-    <p>No UPCs found.</p>
+    <MudAlert Severity="Severity.Info">No Products Yet.</MudAlert>
     @if (!string.IsNullOrWhiteSpace(searchTerm))
     {
-        <MudButton Variant="Variant.Filled" Color="Color.Success" @onclick="AddNewUpc">Add New UPC</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="ShowAddUpcFlowDialog">Add UPC</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="AddProduct">Add Product</MudButton>
     }
 }
 else
 {
-    <MudTable Items="items" Hover="true" Breakpoint="Breakpoint.Sm">
+
+        <MudTable Items="items" Hover="true" Class="fill-height" Breakpoint="Breakpoint.Md">
         <HeaderContent>
+            <MudTh>Image</MudTh>
             <MudTh>UPC</MudTh>
             <MudTh>Title</MudTh>
             <MudTh>Brand</MudTh>
             <MudTh>Actions</MudTh>
         </HeaderContent>
         <RowTemplate>
+            <MudTd DataLabel="Image">
+                <div class="thumbnail-container">
+                    @if (!string.IsNullOrWhiteSpace(context.ImageUrl))
+                    {
+                        <img src="@context.ImageUrl" class="thumbnail" />
+                        <img src="@context.ImageUrl" class="enlarged" />
+                    }
+                    else
+                    {
+                        <div class="thumbnail">No Image</div>
+                    }
+                </div>
+            </MudTd>
             <MudTd DataLabel="UPC">@context.Upc</MudTd>
             <MudTd DataLabel="Title">@context.Title</MudTd>
             <MudTd DataLabel="Brand">@context.Brand</MudTd>
@@ -128,6 +145,11 @@ else
         {
             await LoadAllAsync();
         }
+    }
+
+    private void AddProduct()
+    {
+        NavigationManager.NavigateTo($"/upcs/new/0");
     }
 
     private async void EditUpc(UpcData upc)

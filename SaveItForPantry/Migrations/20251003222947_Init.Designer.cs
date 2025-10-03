@@ -12,8 +12,8 @@ using SaveItForPantry.Data;
 namespace SaveItForPantry.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251002190349_AddShoppingLists")]
-    partial class AddShoppingLists
+    [Migration("20251003222947_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -299,7 +299,13 @@ namespace SaveItForPantry.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("QuantityToBuy")
+                    b.Property<DateTime>("DateAdded")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("InCart")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("Quantity")
                         .HasColumnType("int");
 
                     b.Property<int>("ShoppingListId")

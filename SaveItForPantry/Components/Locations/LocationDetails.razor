@@ -18,13 +18,12 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <MudText Typo="Typo.h3" GutterBottom="true">Pantry Dashboard</MudText>
-<h3>Location Details</h3>
+<MudContainer Fixed="true" MaxWidth="MaxWidth.Large" Class="mt-4">
+<MudText Typo="Typo.h3" GutterBottom="true">Pantry Dashboard</MudText>
 
 @if (location is null)
 {
-    <p>Loading...</p>
+        <MudAlert Severity="Severity.Info">Loading . . . </MudAlert>
 }
 else
 {
@@ -32,15 +31,18 @@ else
 
     <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick='() => AddUpcToLocation("")'>Add Item to Location</MudButton>
     <MudButton Variant="Variant.Filled" Color="Color.Info" @onclick="ShowScanBarcodeDialog">Scan Barcode</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Secondary" @onclick="Back">Back</MudButton>
 
     @if (location.LocationItems.Count == 0)
     {
-        <p>No UPCs in this location.</p>
+            <MudAlert Severity="Severity.Info">No Items in This Location Yet.</MudAlert>
     }
     else
     {
-        <MudTable Items="location.LocationItems" Hover="true" Breakpoint="Breakpoint.Sm">
+
+            <MudTable Items="location.LocationItems" Class="fill-height" Hover="true" Breakpoint="Breakpoint.Md">
             <HeaderContent>
+                <MudTh>Image</MudTh>
                 <MudTh>UPC</MudTh>
                 <MudTh>Title</MudTh>
                 <MudTh>Quantity</MudTh>
@@ -50,6 +52,19 @@ else
                 <MudTh>Actions</MudTh>
             </HeaderContent>
             <RowTemplate>
+                <MudTd DataLabel="Image">
+                    <div class="thumbnail-container">
+                        @if (!string.IsNullOrWhiteSpace(context.UpcData.ImageUrl))
+                        {
+                            <img src="@context.UpcData.ImageUrl" class="thumbnail" />
+                            <img src="@context.UpcData.ImageUrl" class="enlarged" />
+                        }
+                        else
+                        {
+                            <div class="thumbnail">No Image</div>
+                        }
+                    </div>
+                </MudTd>
                 <MudTd DataLabel="UPC">@context.UpcData.Upc</MudTd>
                 <MudTd DataLabel="Title">@context.UpcData.Title</MudTd>
                 <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
@@ -82,6 +97,8 @@ else
     {
         location = await LocationService.GetLocationByIdAsync(Id);
     }
+
+    private void Back() => NavigationManager.NavigateTo("/locations");
 
     private async Task AddUpcToLocation(string upc = "")
     {

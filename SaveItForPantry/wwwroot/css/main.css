@@ -1,0 +1,33 @@
+﻿body {
+}
+
+.thumbnail {
+    max-height: 50px;
+    max-width: 50px;
+}
+
+.thumbnail-container {
+    position: relative;
+    display: inline-block;
+}
+
+.enlarged {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    transform: translateX(10px);
+    visibility: hidden;
+    z-index: 100;
+    max-width: 300px;
+    max-height: 300px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.thumbnail-container:hover .enlarged {
+    visibility: visible;
+}
+
+.fill-height {
+    height: calc(100vh - 300px);
+    overflow-y: auto;
+}

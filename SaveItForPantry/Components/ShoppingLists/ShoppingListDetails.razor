@@ -20,7 +20,7 @@
     <MudText Typo="Typo.h3" GutterBottom="true">Shopping List Details</MudText>
 @if (shoppingList == null)
 {
-    <p>Loading...</p>
+    <MudAlert Severity="Severity.Info">Loading . . . </MudAlert>
 }
 else
 {
@@ -28,15 +28,18 @@ else
 
     <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="() => AddItemToList()">Add Item to List</MudButton>
     <MudButton Variant="Variant.Filled" Color="Color.Info" @onclick="ShowScanBarcodeDialog">Scan Barcode</MudButton>
+    <MudButton  Variant="Variant.Filled" Color="Color.Secondary" @onclick="Back">Back</MudButton>
 
     @if (shoppingList.Items.Count == 0)
     {
-        <p>No items in this shopping list.</p>
+            <MudAlert Severity="Severity.Info">No Items in This Shopping List Yet.</MudAlert>
     }
     else
     {
-        <MudTable Items="shoppingList.Items" Hover="true" Breakpoint="Breakpoint.Sm">
+
+            <MudTable Items="shoppingList.Items" Hover="true" Class="fill-height" Breakpoint="Breakpoint.Md">
             <HeaderContent>
+                <MudTh>Image</MudTh>
                 <MudTh>UPC</MudTh>
                 <MudTh>Title</MudTh>
                 <MudTh>Quantity To Buy</MudTh>
@@ -44,6 +47,19 @@ else
                 <MudTh>Actions</MudTh>
             </HeaderContent>
             <RowTemplate>
+                <MudTd DataLabel="Image">
+                    <div class="thumbnail-container">
+                        @if (context.UpcData != null && !string.IsNullOrWhiteSpace(context.UpcData.ImageUrl))
+                        {
+                            <img src="@context.UpcData.ImageUrl" class="thumbnail" />
+                            <img src="@context.UpcData.ImageUrl" class="enlarged" />
+                        }
+                        else
+                        {
+                            <div class="thumbnail">No Image</div>
+                        }
+                    </div>
+                </MudTd>
                 <MudTd DataLabel="UPC">@(context.UpcData?.Upc ?? "N/A")</MudTd>
                 <MudTd DataLabel="Title">@(context.UpcData?.Title ?? "Unknown")</MudTd>
                 <MudTd DataLabel="Quantity To Buy">@context.Quantity</MudTd>
@@ -206,4 +222,5 @@ else
         }
     }
 
+    private void Back() => NavigationManager.NavigateTo("/shoppinglists");
 }

@@ -9,21 +9,20 @@
 
 @attribute [Authorize]
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>Locations</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <MudText Typo="Typo.h3" GutterBottom="true">Pantry Dashboard</MudText>
-<h3>Locations</h3>
+    <MudText Typo="Typo.h3" GutterBottom="true">Locations</MudText>
 
 <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="AddLocation">Add New Location</MudButton>
 
 @if (locations is null)
 {
-    <p>Loading...</p>
+        <MudAlert Severity="Severity.Info">Loading . . . </MudAlert>
 }
 else if (locations.Count == 0)
 {
-    <p>No locations found.</p>
+    <MudAlert Severity="Severity.Info">No Pantry Locations Yet.</MudAlert>
 }
 else
 {
