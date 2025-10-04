@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using NanoidDotNet;
 using SaveItForPantry.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System;
 
 namespace SaveItForPantry.Services
 {
@@ -31,6 +32,30 @@ namespace SaveItForPantry.Services
             _db.Locations.Add(location);
             await _db.SaveChangesAsync();
             return location;
+        }
+
+        public async Task AddItemToLocationAsync(int locationId, int upcDataId, int quantity, DateTime? expirationDate)
+        {
+            var locationItem = await _db.LocationItems.FirstOrDefaultAsync(li => li.LocationId == locationId && li.UpcDataId == upcDataId && li.ExpirationDate == expirationDate);
+
+            if (locationItem != null)
+            {
+                locationItem.Quantity += quantity;
+            }
+            else
+            {
+                locationItem = new LocationItem
+                {
+                    LocationId = locationId,
+                    UpcDataId = upcDataId,
+                    Quantity = quantity,
+                    ExpirationDate = expirationDate,
+                    ShortId = GenerateShortId()
+                };
+                _db.LocationItems.Add(locationItem);
+            }
+
+            await _db.SaveChangesAsync();
         }
 
         public async Task AddUpcToLocationAsync(int locationId, int upcDataId, int quantity, DateTime? expirationDate)
@@ -99,7 +124,7 @@ namespace SaveItForPantry.Services
 
         private string GenerateShortId()
         {
-            return Guid.NewGuid().ToString("n").Substring(0, 4);
+            return Nanoid.Generate(Nanoid.Alphabets.NoLookAlikes, 4);
         }
     }
 }

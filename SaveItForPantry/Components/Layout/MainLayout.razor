@@ -12,7 +12,7 @@
         <MudSpacer />
         <MudIconButton Icon="fa-brands fa-github" Color="Color.Inherit" Edge="Edge.End" Href="https://github.com/webluke/SaveItForPantry" Target="_blank" />
     </MudAppBar>
-    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" OverlayAutoClose="true" Elevation="2">
         <NavMenu />
     </MudDrawer>
     <MudMainContent Class="pt-16 pa-4">

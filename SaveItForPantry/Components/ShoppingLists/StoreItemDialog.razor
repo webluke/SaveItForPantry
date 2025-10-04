@@ -1,0 +1,65 @@
+
+@using SaveItForPantry.Data
+@using SaveItForPantry.Services
+@using MudBlazor
+
+@inject LocationService LocationService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Store Item</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudSelect T="Location" @bind-Value="selectedLocation" Label="Select Location">
+            @foreach (var location in locations)
+            {
+                <MudSelectItem T="Location" Value="location">@location.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudNumericField @bind-Value="quantityToStore" Label="Quantity to Store" Min="1" Max="@Item.Quantity" />
+        <MudDatePicker @bind-Date="expirationDate" Label="Expiration Date" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Store">Store</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public ShoppingListItem Item { get; set; }
+
+    private List<Location> locations = new();
+    private Location selectedLocation;
+    private int quantityToStore = 1;
+    private DateTime? expirationDate = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        locations = await LocationService.GetLocationsAsync();
+        if (locations.Any())
+        {
+            selectedLocation = locations.First();
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Store()
+    {
+        if (selectedLocation != null)
+        {
+            MudDialog.Close(DialogResult.Ok(new DialogResultData { Location = selectedLocation, Quantity = quantityToStore, ExpirationDate = expirationDate }));
+        }
+    }
+
+    public class DialogResultData
+    {
+        public Location Location { get; set; }
+        public int Quantity { get; set; }
+        public DateTime? ExpirationDate { get; set; }
+    }
+}

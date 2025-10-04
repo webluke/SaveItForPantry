@@ -10,7 +10,10 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
+@inject LocationService LocationService
 @using Microsoft.AspNetCore.Authorization
+@using SaveItForPantry.Components.ShoppingLists
+
 
 @attribute [Authorize]
 
@@ -71,6 +74,7 @@ else
                 </MudTd>
                 <MudTd DataLabel="Actions">
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" @onclick="() => EditItem(context)">Edit</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" @onclick="() => StoreItem(context)">Store</MudButton>
                     <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" @onclick="() => RemoveItem(context)">Remove</MudButton>
                 </MudTd>
             </RowTemplate>
@@ -186,6 +190,35 @@ else
             StateHasChanged();
         }
     }
+
+    private async Task StoreItem(ShoppingListItem item)
+    {
+        var parameters = new DialogParameters { ["Item"] = item };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<StoreItemDialog>("Store Item", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data != null)
+        {
+            var dialogResult = (StoreItemDialog.DialogResultData)result.Data;
+            await LocationService.AddItemToLocationAsync(dialogResult.Location.Id, item.UpcData.Id, dialogResult.Quantity, dialogResult.ExpirationDate);
+
+            item.Quantity -= dialogResult.Quantity;
+            if (item.Quantity <= 0)
+            {
+                await ShoppingListService.RemoveItemFromShoppingListAsync(item.Id);
+            }
+            else
+            {
+                await ShoppingListService.UpdateShoppingListItemAsync(item);
+            }
+
+            Snackbar.Add("Item stored successfully!", Severity.Success);
+            await LoadShoppingListAsync();
+            StateHasChanged();
+        }
+    }
+
 
     private async void ShowScanBarcodeDialog()
     {
