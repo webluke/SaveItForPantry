@@ -1,7 +1,7 @@
 @using MudBlazor
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
-@inject UpcService UpcService
+@inject ItemService UpcService
 
 <MudDialog>
     <TitleContent>Add New UPC</TitleContent>
@@ -27,7 +27,7 @@
 
     private async void Submit()
     {
-        var newUpc = new UpcData
+        var newUpc = new ItemData
         {
             Upc = Upc,
             Title = Title,

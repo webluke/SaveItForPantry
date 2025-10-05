@@ -1,14 +1,14 @@
-@using SaveItForPantry.Components.UPC
+@using SaveItForPantry.Components.Items
 @using MudBlazor
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
-@inject UpcService UpcService
+@inject ItemService UpcService
 @inject IDialogService DialogService
 
 <MudDialog>
     <TitleContent>Add Item to Location</TitleContent>
     <DialogContent>
-        <MudAutocomplete T="UpcData" Label="Item" @bind-Value="SelectedUpc" SearchFunc="@SearchUpcs"
+        <MudAutocomplete T="ItemData" Label="Item" @bind-Value="SelectedUpc" SearchFunc="@SearchUpcs"
                          ToStringFunc="@(u => u?.Title ?? u?.Upc ?? string.Empty)" Required="true" />
         @if (SelectedUpc == null && !string.IsNullOrWhiteSpace(SearchTerm))
         {
@@ -27,7 +27,7 @@
     [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public string Upc { get; set; } = string.Empty;
 
-    public UpcData? SelectedUpc { get; set; }
+    public ItemData? SelectedUpc { get; set; }
     public int Quantity { get; set; } = 1;
     public DateTime? ExpirationDate { get; set; }
     private string SearchTerm { get; set; } = string.Empty;
@@ -46,12 +46,12 @@
         }
     }
 
-    private async Task<IEnumerable<UpcData>> SearchUpcs(string value, CancellationToken token)
+    private async Task<IEnumerable<ItemData>> SearchUpcs(string value, CancellationToken token)
     {
         SearchTerm = value;
         if (string.IsNullOrWhiteSpace(value))
         {
-            return Enumerable.Empty<UpcData>();
+            return Enumerable.Empty<ItemData>();
         }
         var results = await UpcService.SearchLocalAsync(value);
         return results;
@@ -60,12 +60,12 @@
     private async void SearchApiAndAddUpc()
     {
         var parameters = new DialogParameters { ["Upc"] = SearchTerm };
-        var dialog = await DialogService.ShowAsync<SearchApiAndAddUpcDialog>("Search API and Add UPC", parameters);
+        var dialog = await DialogService.ShowAsync<SearchApiAndAddItemDialog>("Search API and Add UPC", parameters);
         var result = await dialog.Result;
 
         if (!result.Canceled)
         {
-            SelectedUpc = result.Data as UpcData;
+            SelectedUpc = result.Data as ItemData;
         }
     }
 

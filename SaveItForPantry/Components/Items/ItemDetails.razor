@@ -1,9 +1,9 @@
-@page "/upcs/{Id:int}"
-@page "/upcs/new/{Upc}"
+@page "/items/{Id:int}"
+@page "/items/new/{Upc}"
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
 @using MudBlazor
-@inject UpcService UpcService
+@inject ItemService ItemService
 @inject NavigationManager NavigationManager
 @using Microsoft.AspNetCore.Authorization
 
@@ -11,7 +11,7 @@
 <PageTitle>UPC Details</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <MudText Typo="Typo.h3" GutterBottom="true">UPC Details</MudText>
+    <MudText Typo="Typo.h3" GutterBottom="true">Item Details</MudText>
 
 @if (item is null)
 {
@@ -114,17 +114,17 @@ else
     [Parameter]
     public string Upc { get; set; }
 
-    private UpcData? item;
+    private ItemData? item;
 
     protected override async Task OnInitializedAsync()
     {
         if (Id == 0)
         {
-            item = new UpcData { Upc = Upc };
+            item = new ItemData { Upc = Upc };
         }
         else
         {
-            item = await UpcService.GetByIdAsync(Id);
+            item = await ItemService.GetByIdAsync(Id);
         }
     }
 
@@ -134,14 +134,14 @@ else
 
         if (item.Id == 0)
         {
-            await UpcService.CreateAsync(item);
+            await ItemService.CreateAsync(item);
         }
         else
         {
-            await UpcService.UpdateAsync(item);
+            await ItemService.UpdateAsync(item);
         }
-        NavigationManager.NavigateTo("/upcs");
+        NavigationManager.NavigateTo("/items");
     }
 
-    private void Back() => NavigationManager.NavigateTo("/upcs");
+    private void Back() => NavigationManager.NavigateTo("/items");
 }

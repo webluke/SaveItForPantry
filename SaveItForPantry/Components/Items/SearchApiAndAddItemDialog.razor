@@ -1,7 +1,7 @@
 @using MudBlazor
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
-@inject UpcService UpcService
+@inject ItemService UpcService
 
 <MudDialog>
     <TitleContent>Search API and Add UPC</TitleContent>
@@ -37,7 +37,7 @@
     [Parameter] public string Upc { get; set; } = string.Empty;
 
     private bool IsLoading { get; set; } = true;
-    private UpcData? UpcData { get; set; }
+    private ItemData? UpcData { get; set; }
 
     private string ManualUpc { get; set; } = string.Empty;
     private string ManualTitle { get; set; } = string.Empty;
@@ -63,7 +63,7 @@
         }
         else
         {
-            var newUpc = new UpcData
+            var newUpc = new ItemData
             {
                 Upc = ManualUpc,
                 Title = ManualTitle,

@@ -1,10 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NanoidDotNet;
 using SaveItForPantry.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SaveItForPantry.Services
 {
@@ -19,12 +15,12 @@ namespace SaveItForPantry.Services
 
         public async Task<List<Location>> GetLocationsAsync()
         {
-            return await _db.Locations.Include(l => l.LocationItems).ThenInclude(li => li.UpcData).ToListAsync();
+            return await _db.Locations.Include(l => l.LocationItems).ThenInclude(li => li.ItemData).ToListAsync();
         }
 
         public async Task<Location> GetLocationByIdAsync(int id)
         {
-            return await _db.Locations.Include(l => l.LocationItems).ThenInclude(li => li.UpcData).FirstOrDefaultAsync(l => l.Id == id);
+            return await _db.Locations.Include(l => l.LocationItems).ThenInclude(li => li.ItemData).FirstOrDefaultAsync(l => l.Id == id);
         }
 
         public async Task<Location> CreateLocationAsync(Location location)
@@ -34,9 +30,9 @@ namespace SaveItForPantry.Services
             return location;
         }
 
-        public async Task AddItemToLocationAsync(int locationId, int upcDataId, int quantity, DateTime? expirationDate)
+        public async Task AddItemToLocationAsync(int locationId, int itemDataId, int quantity, DateTime? expirationDate)
         {
-            var locationItem = await _db.LocationItems.FirstOrDefaultAsync(li => li.LocationId == locationId && li.UpcDataId == upcDataId && li.ExpirationDate == expirationDate);
+            var locationItem = await _db.LocationItems.FirstOrDefaultAsync(li => li.LocationId == locationId && li.ItemDataId == itemDataId && li.ExpirationDate == expirationDate);
 
             if (locationItem != null)
             {
@@ -47,7 +43,7 @@ namespace SaveItForPantry.Services
                 locationItem = new LocationItem
                 {
                     LocationId = locationId,
-                    UpcDataId = upcDataId,
+                    ItemDataId = itemDataId,
                     Quantity = quantity,
                     ExpirationDate = expirationDate,
                     ShortId = GenerateShortId()
@@ -58,17 +54,17 @@ namespace SaveItForPantry.Services
             await _db.SaveChangesAsync();
         }
 
-        public async Task AddUpcToLocationAsync(int locationId, int upcDataId, int quantity, DateTime? expirationDate)
+        public async Task AddUpcToLocationAsync(int locationId, int itemDataId, int quantity, DateTime? expirationDate)
         {
             var location = await GetLocationByIdAsync(locationId);
-            var upcData = await _db.UpcData.FindAsync(upcDataId);
+            var upcData = await _db.ItemData.FindAsync(itemDataId);
 
             if (location != null && upcData != null)
             {
                 var locationItem = new LocationItem
                 {
                     LocationId = locationId,
-                    UpcDataId = upcDataId,
+                    ItemDataId = itemDataId,
                     Quantity = quantity,
                     ExpirationDate = expirationDate,
                     ShortId = GenerateShortId()

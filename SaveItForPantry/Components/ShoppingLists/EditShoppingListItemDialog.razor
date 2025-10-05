@@ -4,7 +4,7 @@
 <MudDialog>
     <TitleContent>Edit Item Quantity</TitleContent>
     <DialogContent>
-        <MudText Typo="Typo.body1" Class="mb-2">@Item.UpcData?.Title (UPC: @Item.UpcData?.Upc)</MudText>
+        <MudText Typo="Typo.body1" Class="mb-2">@Item.ItemData?.Title (UPC: @Item.ItemData?.Upc)</MudText>
         <MudNumericField Label="Quantity To Buy" @bind-Value="QuantityToBuy" Required="true" Min="1" />
         <MudSwitch @bind-Value="InCart" Label="In Cart" Color="Color.Primary" />
     </DialogContent>

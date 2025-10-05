@@ -5,7 +5,7 @@ namespace SaveItForPantry.Data
 {
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
     {
-        public DbSet<UpcData> UpcData { get; set; }
+        public DbSet<ItemData> ItemData { get; set; }
         public DbSet<Location> Locations { get; set; }
         public DbSet<LocationItem> LocationItems { get; set; } = null!;
         public DbSet<ShoppingList> ShoppingLists { get; set; } = null!;

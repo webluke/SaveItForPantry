@@ -2,11 +2,11 @@
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
 @using MudBlazor
-@using SaveItForPantry.Components.UPC
+@using SaveItForPantry.Components.Items
 @using SaveItForPantry.Components.ShoppingLists
 @using Microsoft.JSInterop
 @inject LocationService LocationService
-@inject UpcService UpcService
+@inject ItemService UpcService
 @inject ShoppingListService ShoppingListService
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
@@ -54,10 +54,10 @@ else
             <RowTemplate>
                 <MudTd DataLabel="Image">
                     <div class="thumbnail-container">
-                        @if (!string.IsNullOrWhiteSpace(context.UpcData.ImageUrl))
+                        @if (!string.IsNullOrWhiteSpace(context.ItemData.ImageUrl))
                         {
-                            <img src="@context.UpcData.ImageUrl" class="thumbnail" />
-                            <img src="@context.UpcData.ImageUrl" class="enlarged" />
+                            <img src="@context.ItemData.ImageUrl" class="thumbnail" />
+                            <img src="@context.ItemData.ImageUrl" class="enlarged" />
                         }
                         else
                         {
@@ -65,8 +65,8 @@ else
                         }
                     </div>
                 </MudTd>
-                <MudTd DataLabel="UPC">@context.UpcData.Upc</MudTd>
-                <MudTd DataLabel="Title">@context.UpcData.Title</MudTd>
+                <MudTd DataLabel="UPC">@context.ItemData.Upc</MudTd>
+                <MudTd DataLabel="Title">@context.ItemData.Title</MudTd>
                 <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
                 <MudTd DataLabel="Date Added">@context.DateAdded.ToShortDateString()</MudTd>
                 <MudTd DataLabel="Expiration Date">@context.ExpirationDate?.ToShortDateString()</MudTd>
@@ -173,7 +173,7 @@ else
         {
             var parameters = new DialogParameters
             {
-                ["Upc"] = item.UpcData.Upc,
+                ["Upc"] = item.ItemData.Upc
             };
             var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
             var dialog = await DialogService.ShowAsync<AddItemToShoppingListDialog>("Add to Shopping List", parameters, options);
@@ -224,27 +224,27 @@ else
 
         if (!result.Canceled)
         {
-            string upc = result.Data.ToString();
-            UpcData? upcData = null;
+            string item = result.Data.ToString();
+            ItemData? upcData = null;
 
-            var localResults = await UpcService.SearchLocalAsync(upc);
+            var localResults = await UpcService.SearchLocalAsync(item);
             if (localResults.Any())
             {
                 upcData = localResults.First();
             }
             else
             {
-                upcData = await UpcService.GetUpcDataByUpcAsync(upc);
+                upcData = await UpcService.GetUpcDataByUpcAsync(item);
             }
 
             if (upcData == null)
             {
-                var parameters = new DialogParameters { ["Upc"] = upc };
-                var editDialog = await DialogService.ShowAsync<EditUpcDialog>("Create UPC", parameters);
+                var parameters = new DialogParameters { ["Upc"] = item };
+                var editDialog = await DialogService.ShowAsync<EditItemDialog>("Create Item", parameters);
                 var editResult = await editDialog.Result;
                 if (!editResult.Canceled)
                 {
-                    upcData = editResult.Data as UpcData;
+                    upcData = editResult.Data as ItemData;
                 }
             }
 
@@ -257,7 +257,7 @@ else
 
     private async Task PrintLabel(LocationItem item)
     {
-        var title = item.UpcData.Title;
+        var title = item.ItemData.Title;
         var quantity = item.Quantity.ToString();
         var added = item.DateAdded.ToString("MM/dd/yyyy");
         var expires = item.ExpirationDate?.ToString("MM/dd/yyyy") ?? "N/A";

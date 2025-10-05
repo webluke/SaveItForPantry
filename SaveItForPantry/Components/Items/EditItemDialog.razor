@@ -1,7 +1,7 @@
 @using MudBlazor
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
-@inject UpcService UpcService
+@inject ItemService UpcService
 
 <MudDialog>
     <TitleContent>Edit UPC</TitleContent>
@@ -13,10 +13,10 @@
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="UpcData.Ean" Label="EAN" />
             </MudItem>
-            <MudItem xs="12" sm="6">
+            <MudItem xs="12">
                 <MudTextField @bind-Value="UpcData.Title" Label="Title" />
             </MudItem>
-            <MudItem xs="12" sm="6">
+            <MudItem xs="12">
                 <MudTextField @bind-Value="UpcData.Description" Label="Description" Lines="5" />
             </MudItem>
             <MudItem xs="12" sm="6">
@@ -95,7 +95,7 @@
 
 @code {
     [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = default!;
-    [Parameter] public UpcData UpcData { get; set; } = new();
+    [Parameter] public ItemData UpcData { get; set; } = new();
 
     private async void Submit()
     {

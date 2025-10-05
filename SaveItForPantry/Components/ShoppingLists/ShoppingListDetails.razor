@@ -1,11 +1,11 @@
-@page "/shoppinglists/{Id:int}"
+﻿@page "/shoppinglists/{Id:int}"
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
 @using MudBlazor
-@using SaveItForPantry.Components.UPC
+@using SaveItForPantry.Components.Items
 @using Microsoft.JSInterop
 @inject ShoppingListService ShoppingListService
-@inject UpcService UpcService
+@inject ItemService UpcService
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -55,10 +55,10 @@ else
             <RowTemplate>
                 <MudTd DataLabel="Image">
                     <div class="thumbnail-container">
-                        @if (context.UpcData != null && !string.IsNullOrWhiteSpace(context.UpcData.ImageUrl))
+                        @if (context.ItemData != null && !string.IsNullOrWhiteSpace(context.ItemData.ImageUrl))
                         {
-                            <img src="@context.UpcData.ImageUrl" class="thumbnail" />
-                            <img src="@context.UpcData.ImageUrl" class="enlarged" />
+                            <img src="@context.ItemData.ImageUrl" class="thumbnail" />
+                            <img src="@context.ItemData.ImageUrl" class="enlarged" />
                         }
                         else
                         {
@@ -66,8 +66,8 @@ else
                         }
                     </div>
                 </MudTd>
-                <MudTd DataLabel="UPC">@(context.UpcData?.Upc ?? "N/A")</MudTd>
-                <MudTd DataLabel="Title">@(context.UpcData?.Title ?? "Unknown")</MudTd>
+                <MudTd DataLabel="UPC">@(context.ItemData?.Upc ?? "N/A")</MudTd>
+                <MudTd DataLabel="Title">@(context.ItemData?.Title ?? "Unknown")</MudTd>
                 <MudTd DataLabel="Quantity To Buy">@context.Quantity</MudTd>
                 <MudTd DataLabel="In Cart">
                     <MudSwitch @bind-Value="@context.InCart" @onclick="() => UpdateInCart(context)" Color="Color.Primary" />
@@ -98,15 +98,15 @@ else
         shoppingList = await ShoppingListService.GetShoppingListByIdAsync(Id);
     }
 
-    private async Task AddItemToList(string upc = "")
+    private async Task AddItemToList(string item = "")
     {
         var parameters = new DialogParameters
         {
             ["ShoppingListId"] = Id
         };
-        if (!string.IsNullOrWhiteSpace(upc))
+        if (!string.IsNullOrWhiteSpace(item))
         {
-            parameters["Upc"] = upc;
+            parameters["Upc"] = item;
         }
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
         var dialog = await DialogService.ShowAsync<AddItemToShoppingListDialog>("Add Item to Shopping List", parameters, options);
@@ -133,16 +133,16 @@ else
                     }
                     else
                     {
-                        Snackbar.Add("UPC not found.", Severity.Error);
+                        Snackbar.Add("Item not found.", Severity.Error);
                     }
                 }
                 catch (NoApiResultException ex)
                 {
-                    Snackbar.Add(ex.Message + ". Please add the UPC first.", Severity.Warning);
+                    Snackbar.Add(ex.Message + ". Please add the Item first.", Severity.Warning);
                 }
                 catch (Exception ex)
                 {
-                    Snackbar.Add($"Error adding UPC: {ex.Message}", Severity.Error);
+                    Snackbar.Add($"Error adding Item: {ex.Message}", Severity.Error);
                 }
             }
         }
@@ -201,7 +201,7 @@ else
         if (result != null && !result.Canceled && result.Data != null)
         {
             var dialogResult = (StoreItemDialog.DialogResultData)result.Data;
-            await LocationService.AddItemToLocationAsync(dialogResult.Location.Id, item.UpcData.Id, dialogResult.Quantity, dialogResult.ExpirationDate);
+            await LocationService.AddItemToLocationAsync(dialogResult.Location.Id, item.ItemDataId, dialogResult.Quantity, dialogResult.ExpirationDate);
 
             item.Quantity -= dialogResult.Quantity;
             if (item.Quantity <= 0)
@@ -227,33 +227,33 @@ else
 
         if (!result.Canceled)
         {
-            string upc = result.Data.ToString();
-            UpcData? upcData = null;
+            string item = result.Data.ToString();
+            ItemData? itemData = null;
 
-            var localResults = await UpcService.SearchLocalAsync(upc);
+            var localResults = await UpcService.SearchLocalAsync(item);
             if (localResults.Any())
             {
-                upcData = localResults.First();
+                itemData = localResults.First();
             }
             else
             {
-                upcData = await UpcService.GetUpcDataByUpcAsync(upc);
+                itemData = await UpcService.GetUpcDataByUpcAsync(item);
             }
 
-            if (upcData == null)
+            if (itemData == null)
             {
-                var parameters = new DialogParameters { ["Upc"] = upc };
-                var editDialog = await DialogService.ShowAsync<EditUpcDialog>("Create UPC", parameters);
+                var parameters = new DialogParameters { ["Upc"] = item };
+                var editDialog = await DialogService.ShowAsync<EditItemDialog>("Create Item", parameters);
                 var editResult = await editDialog.Result;
                 if (!editResult.Canceled)
                 {
-                    upcData = editResult.Data as UpcData;
+                    itemData = editResult.Data as ItemData;
                 }
             }
 
-            if (upcData != null)
+            if (itemData != null)
             {
-                await AddItemToList(upcData.Upc);
+                await AddItemToList(itemData.Upc);
             }
         }
     }
@@ -263,13 +263,22 @@ else
     private async Task PrintShoppingList()
     {
         var listName = shoppingList?.Name ?? "Shopping List";
-        var itemsHtml = string.Join("", shoppingList.Items.Select(item => $@"
+
+        var itemsHtml = string.Join("", shoppingList.Items.Select(item =>
+        {
+            var imageHtml = string.IsNullOrWhiteSpace(item.ItemData?.ImageUrl)
+                ? "<div class='noimage'>No Image</div>"
+                : $"<img class='itemimg' src='{item.ItemData.ImageUrl}' />";
+            var title = item.ItemData?.Title ?? "Unknown";
+            var check = item.InCart ? "✔️" : "";
+            return $@"
             <tr>
-                <td><img src='{item.UpcData.ImageUrl}' height='50px' width='50px' /></td>
-                <td>{item.UpcData.Title}</td>
-                <td>{item.Quantity}</td>
-                <td></td>
-            </tr>"));
+                <td class='center'>{imageHtml}</td>
+                <td>{System.Net.WebUtility.HtmlEncode(title)}</td>                
+                <td class='center'>{item.Quantity}</td>
+                <td class='center'><div class='box'>{check}</div></td>
+            </tr>";
+        }));
 
         var printHtml = $@"
         <!DOCTYPE html>
@@ -279,13 +288,17 @@ else
             <style>
                 body {{ font-family: Arial, sans-serif; }}
                 h1 {{ text-align: center; }}
-                table {{ width: 100%; border-collapse: collapse; }}
-                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+                table {{ width: 100%; border-collapse: collapse;  }}
+                th, td {{ border: 1px solid #ddd; padding: 2px; text-align: left; }}
                 th {{ background-color: #f2f2f2; }}
+                .center {{ text-align: center; }}
+                .box {{ height: 25px; width: 25px; border: 2px solid #B8B8B8; border-radius: 5px; margin: auto; text-align: center; }}
+                .itemimg {{ margin: auto; height: 50px; width: 50px; }}
+                .noimage {{ margin: auto; height: 46px; width: 46px; border: 1px solid #ddd; border-radius: 5px; }}
             </style>
         </head>
         <body>
-            <h1>{listName}</h1>
+            <h1>{System.Net.WebUtility.HtmlEncode(listName)}</h1>
             <table>
                 <thead>
                     <tr>

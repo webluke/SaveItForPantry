@@ -1,9 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SaveItForPantry.Data
 {
-    public class UpcData
+    public class ItemData
     {
         [Key]
         public int Id { get; set; }

@@ -118,7 +118,7 @@
                     .Select(li => new ExpiringItem
                     {
                         LocationName = l.Name,
-                        ItemTitle = li.UpcData?.Title ?? "Unknown",
+                        ItemTitle = li.ItemData?.Title ?? "Unknown",
                         ExpirationDate = li.ExpirationDate!.Value,
                         Quantity = li.Quantity,
                         ShortId = li.ShortId

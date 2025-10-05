@@ -1,34 +1,29 @@
-using System;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SaveItForPantry.Data;
 
 namespace SaveItForPantry.Services
 {
-    public class UpcService
+    public class ItemService
     {
         private readonly IHttpClientFactory _httpFactory;
         private readonly ApplicationDbContext _db;
         private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web) { PropertyNameCaseInsensitive = true };
 
-        public UpcService(IHttpClientFactory httpFactory, ApplicationDbContext db)
+        public ItemService(IHttpClientFactory httpFactory, ApplicationDbContext db)
         {
             _httpFactory = httpFactory;
             _db = db;
         }
 
-        public async Task<UpcData?> GetUpcDataByUpcAsync(string upc)
+        public async Task<ItemData?> GetUpcDataByUpcAsync(string upc)
         {
             if (string.IsNullOrWhiteSpace(upc))
             {
                 return null;
             }
 
-            var existing = await _db.UpcData.FirstOrDefaultAsync(x => x.Upc == upc);
+            var existing = await _db.ItemData.FirstOrDefaultAsync(x => x.Upc == upc);
             if (existing != null)
             {
                 return existing;
@@ -47,7 +42,7 @@ namespace SaveItForPantry.Services
 
                 var apiItem = resp.items[0];
 
-                var newUpcData = new UpcData
+                var newUpcData = new ItemData
                 {
                     Upc = apiItem.upc ?? upc,
                     Ean = apiItem.ean,
@@ -85,7 +80,7 @@ namespace SaveItForPantry.Services
                     newUpcData.OfferUpdatedT = DateTimeOffset.FromUnixTimeSeconds(offer.updated_t).DateTime;
                 }
 
-                _db.UpcData.Add(newUpcData);
+                _db.ItemData.Add(newUpcData);
                 await _db.SaveChangesAsync();
 
                 return newUpcData;
@@ -114,33 +109,33 @@ namespace SaveItForPantry.Services
             }
         }
 
-        public async Task<UpcData?> GetByIdAsync(int id) =>
-            await _db.UpcData.FirstOrDefaultAsync(x => x.Id == id);
+        public async Task<ItemData?> GetByIdAsync(int id) =>
+            await _db.ItemData.FirstOrDefaultAsync(x => x.Id == id);
 
-        public async Task<UpcData> CreateAsync(UpcData entity)
+        public async Task<ItemData> CreateAsync(ItemData entity)
         {
-            _db.UpcData.Add(entity);
+            _db.ItemData.Add(entity);
             await _db.SaveChangesAsync();
             return entity;
         }
 
-        public async Task UpdateAsync(UpcData entity)
+        public async Task UpdateAsync(ItemData entity)
         {
-            _db.UpcData.Update(entity);
+            _db.ItemData.Update(entity);
             await _db.SaveChangesAsync();
         }
 
-        public async Task<UpcData[]> SearchLocalAsync(string filter)
+        public async Task<ItemData[]> SearchLocalAsync(string filter)
         {
-            var q = _db.UpcData.AsQueryable();
+            var q = _db.ItemData.AsQueryable();
             if (!string.IsNullOrWhiteSpace(filter))
                 q = q.Where(x => x.Upc.Contains(filter) || (x.Title ?? "").ToLower().Contains(filter.ToLower()));
             return await q.OrderByDescending(x => x.RetrievedAt).ToArrayAsync();
         }
 
-        public async Task<UpcData[]> SearchAsync(string? upcFilter, string? titleFilter)
+        public async Task<ItemData[]> SearchAsync(string? upcFilter, string? titleFilter)
         {
-            var q = _db.UpcData.AsQueryable();
+            var q = _db.ItemData.AsQueryable();
             if (!string.IsNullOrWhiteSpace(upcFilter))
                 q = q.Where(x => x.Upc == upcFilter);
             if (!string.IsNullOrWhiteSpace(titleFilter))
@@ -148,7 +143,7 @@ namespace SaveItForPantry.Services
             return await q.OrderByDescending(x => x.RetrievedAt).ToArrayAsync();
         }
 
-        public async Task<UpcData[]> SearchWithLookupAsync(string? upcFilter, string? titleFilter)
+        public async Task<ItemData[]> SearchWithLookupAsync(string? upcFilter, string? titleFilter)
         {
             if (!string.IsNullOrWhiteSpace(upcFilter))
             {
@@ -168,13 +163,13 @@ namespace SaveItForPantry.Services
             return await SearchAsync(null, titleFilter);
         }
 
-        public async Task DeleteAsync(UpcData entity)
+        public async Task DeleteAsync(ItemData entity)
         {
-            _db.UpcData.Remove(entity);
+            _db.ItemData.Remove(entity);
             await _db.SaveChangesAsync();
         }
 
-        public async Task<UpcData[]> GetAllAsync() =>
-            await _db.UpcData.OrderByDescending(x => x.RetrievedAt).ToArrayAsync();
+        public async Task<ItemData[]> GetAllAsync() =>
+            await _db.ItemData.OrderByDescending(x => x.RetrievedAt).ToArrayAsync();
     }
 }

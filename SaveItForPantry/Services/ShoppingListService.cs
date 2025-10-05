@@ -16,7 +16,7 @@ namespace SaveItForPantry.Services
         {
             return await _db.ShoppingLists
                 .Include(sl => sl.Items)
-                .ThenInclude(sli => sli.UpcData)
+                .ThenInclude(sli => sli.ItemData)
                 .ToListAsync();
         }
 
@@ -24,7 +24,7 @@ namespace SaveItForPantry.Services
         {
             return await _db.ShoppingLists
                 .Include(sl => sl.Items)
-                .ThenInclude(sli => sli.UpcData)
+                .ThenInclude(sli => sli.ItemData)
                 .FirstOrDefaultAsync(sl => sl.Id == id);
         }
 
@@ -38,7 +38,7 @@ namespace SaveItForPantry.Services
         public async Task AddItemToShoppingListAsync(int shoppingListId, int upcDataId, int quantityToBuy)
         {
             var existingItem = await _db.ShoppingListItems
-                .FirstOrDefaultAsync(sli => sli.ShoppingListId == shoppingListId && sli.UpcDataId == upcDataId);
+                .FirstOrDefaultAsync(sli => sli.ShoppingListId == shoppingListId && sli.ItemDataId == upcDataId);
 
             if (existingItem != null)
             {
@@ -49,7 +49,7 @@ namespace SaveItForPantry.Services
                 var item = new ShoppingListItem
                 {
                     ShoppingListId = shoppingListId,
-                    UpcDataId = upcDataId,
+                    ItemDataId = upcDataId,
                     Quantity = quantityToBuy
                 };
                 _db.ShoppingListItems.Add(item);

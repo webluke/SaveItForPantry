@@ -1,7 +1,7 @@
 @using MudBlazor
 @using SaveItForPantry.Data
 @using SaveItForPantry.Services
-@inject UpcService UpcService
+@inject ItemService ItemService
 @inject IDialogService DialogService
 
 <MudDialog>
@@ -22,25 +22,25 @@
 
     private async void SearchAndEditUpc()
     {
-        UpcData? upcData = null;
+        ItemData? upcData = null;
 
-        var localResults = await UpcService.SearchLocalAsync(upcToSearch);
+        var localResults = await ItemService.SearchLocalAsync(upcToSearch);
         if (localResults.Any())
         {
             upcData = localResults.First();
         }
         else
         {
-            upcData = await UpcService.GetUpcDataByUpcAsync(upcToSearch);
+            upcData = await ItemService.GetUpcDataByUpcAsync(upcToSearch);
         }
 
         if (upcData == null)
         {
-            upcData = new UpcData { Upc = upcToSearch };
+            upcData = new ItemData { Upc = upcToSearch };
         }
 
         var parameters = new DialogParameters { ["UpcData"] = upcData };
-        var dialog = await DialogService.ShowAsync<EditUpcDialog>("Edit UPC", parameters);
+        var dialog = await DialogService.ShowAsync<EditItemDialog>("Edit Item", parameters);
         var result = await dialog.Result;
 
         if (!result.Canceled)

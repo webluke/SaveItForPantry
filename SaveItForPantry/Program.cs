@@ -47,7 +47,7 @@ builder.Services.AddHttpClient("upc", client =>
     client.BaseAddress = new Uri("https://api.upcitemdb.com/");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
-builder.Services.AddScoped<UpcService>();
+builder.Services.AddScoped<ItemService>();
 builder.Services.AddScoped<LocationService>();
 builder.Services.AddScoped<ShoppingListService>();
 

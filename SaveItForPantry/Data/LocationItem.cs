@@ -13,8 +13,8 @@ namespace SaveItForPantry.Data
         public Location Location { get; set; }
 
         [Required]
-        public int UpcDataId { get; set; }
-        public UpcData UpcData { get; set; }
+        public int ItemDataId { get; set; }
+        public ItemData ItemData { get; set; }
 
         public int Quantity { get; set; }
         public DateTime DateAdded { get; set; } = DateTime.UtcNow;

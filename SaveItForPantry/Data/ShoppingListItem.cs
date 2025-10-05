@@ -13,9 +13,9 @@ namespace SaveItForPantry.Data
         public ShoppingList ShoppingList { get; set; }
 
         [Required]
-        public int UpcDataId { get; set; }
+        public int ItemDataId { get; set; }
 
-        public UpcData? UpcData { get; set; }
+        public ItemData? ItemData { get; set; }
 
         public int Quantity { get; set; }
         public bool InCart { get; set; }
